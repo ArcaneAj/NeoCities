@@ -1,0 +1,13 @@
+User-agent: GPTBot
+Disallow: /
+User-agent: ChatGPT-User
+Disallow: /
+User-agent: OpenAI-GPT
+Disallow: /
+User-agent: *AI*
+Disallow: /
+
+
+
+User-agent: *
+Allow: /

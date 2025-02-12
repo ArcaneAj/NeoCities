@@ -13,12 +13,7 @@
 </style>
 
 <script>
-    import {
-        CreateFragmentShader,
-        CreateVertexShader,
-        LoadWebGLContext,
-        RunDemoAnimation,
-    } from '../scripts/main';
+    import { LoadWebGLContext, RunDemoAnimation } from '../scripts/main';
 
     // Define the behaviour for our new type of HTML element.
     class AstroHeart extends HTMLElement {
@@ -36,10 +31,7 @@
 
             const gl = LoadWebGLContext(canvas);
 
-            var vertexShader = CreateVertexShader(gl);
-            var fragmentShader = CreateFragmentShader(gl);
-
-            RunDemoAnimation(canvas, gl, vertexShader, fragmentShader);
+            RunDemoAnimation(canvas, gl);
         }
     }
 

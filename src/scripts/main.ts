@@ -1,4 +1,4 @@
-export function CreateVertexShader(gl: WebGLRenderingContext): WebGLShader {
+function CreateDemoVertexShader(gl: WebGLRenderingContext): WebGLShader {
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
     gl.shaderSource(
         vertexShader,
@@ -70,7 +70,7 @@ v_overlight = 0.9 + glanceLighting * 0.1;
     gl.compileShader(vertexShader);
     return vertexShader;
 }
-export function CreateFragmentShader(gl: WebGLRenderingContext): WebGLShader {
+function CreateDemoFragmentShader(gl: WebGLRenderingContext): WebGLShader {
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(
         fragmentShader,
@@ -103,10 +103,10 @@ export function LoadWebGLContext(
 
 export function RunDemoAnimation(
     canvas: HTMLCanvasElement,
-    gl: WebGLRenderingContext,
-    vertexShader: WebGLShader,
-    fragmentShader: WebGLShader
+    gl: WebGLRenderingContext
 ): void {
+    var vertexShader = CreateDemoVertexShader(gl);
+    var fragmentShader = CreateDemoFragmentShader(gl);
     // Takes the compiled shaders and adds them to the canvas'
     // WebGL context so that can be used:
     const shaderProgram = gl.createProgram()!;

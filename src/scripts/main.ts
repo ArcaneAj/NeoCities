@@ -248,12 +248,19 @@ export function RunAnimation(
         program,
         'a_position'
     );
+    const resolutionUniformLocation = gl.getUniformLocation(
+        program,
+        'u_resolution'
+    );
+    const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-    // three 2d points
-    const positions = [0, 0, 0, 0.5, 0.7, 0];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    // // // three 2d points
+    // // const positions = [
+    // //     100, 200, 800, 200, 100, 300, 100, 300, 800, 200, 800, 300,
+    // // ];
+    // // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     //RENDERING
 
@@ -264,15 +271,18 @@ export function RunAnimation(
     gl.useProgram(program);
     gl.enableVertexAttribArray(positionAttributeLocation);
 
-    // Bind the position buffer.
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    // // // Bind the position buffer.
+    // // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    // set the resolution
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
     // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-    var size = 2; // 2 components per iteration
-    var type = gl.FLOAT; // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0; // start at the beginning of the buffer
+    const size = 2; // 2 components per iteration
+    const type = gl.FLOAT; // the data is 32bit floats
+    const normalize = false; // don't normalize the data
+    const stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
+    const offset = 0; // start at the beginning of the buffer
     gl.vertexAttribPointer(
         positionAttributeLocation,
         size,
@@ -281,10 +291,69 @@ export function RunAnimation(
         stride,
         offset
     );
-    var primitiveType = gl.TRIANGLES;
-    var offset = 0;
-    var count = 3;
-    gl.drawArrays(primitiveType, offset, count);
+    // // gl.uniform4f(
+    // //     colorUniformLocation,
+    // //     Math.random(),
+    // //     Math.random(),
+    // //     Math.random(),
+    // //     1
+    // // );
+    // // gl.drawArrays(gl.TRIANGLES, offset, positions.length / size);
+
+    // draw 50 random rectangles in random colors
+    for (var ii = 0; ii < 50; ++ii) {
+        // Setup a random rectangle
+        // This will write to positionBuffer because
+        // its the last thing we bound on the ARRAY_BUFFER
+        // bind point
+        const x = randomInt(gl.canvas.width - 1);
+        const y = randomInt(gl.canvas.height - 1);
+        const width = randomInt(gl.canvas.width - x);
+        const height = randomInt(gl.canvas.height - y);
+        setRectangle(gl, x, y, width, height);
+
+        // Set a random color.
+        gl.uniform4f(
+            colorUniformLocation,
+            Math.random(),
+            Math.random(),
+            Math.random(),
+            1
+        );
+
+        // Draw the rectangle.
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+}
+
+// Returns a random integer from 0 to range - 1.
+function randomInt(range: number) {
+    return Math.floor(Math.random() * range);
+}
+
+// Fills the buffer with the values that define a rectangle.
+function setRectangle(
+    gl: WebGLRenderingContext,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+) {
+    var x1 = x;
+    var x2 = x + width;
+    var y1 = y;
+    var y2 = y + height;
+
+    // NOTE: gl.bufferData(gl.ARRAY_BUFFER, ...) will affect
+    // whatever buffer is bound to the `ARRAY_BUFFER` bind point
+    // but so far we only have one buffer. If we had more than one
+    // buffer we'd want to bind that buffer to `ARRAY_BUFFER` first.
+
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
+        gl.STATIC_DRAW
+    );
 }
 
 function Render(
@@ -355,14 +424,22 @@ function CreateVertexShader(gl: WebGLRenderingContext): WebGLShader {
         gl.VERTEX_SHADER,
         `
 // an attribute will receive data from a buffer
-attribute vec4 a_position;
+    attribute vec2 a_position;
+
+    uniform vec2 u_resolution;
 
 // all shaders have a main function
 void main() {
-
-// gl_Position is a special variable a vertex shader
-// is responsible for setting
-gl_Position = a_position;
+    // convert the position from pixels to 0.0 to 1.0
+    vec2 zeroToOne = a_position / u_resolution;
+ 
+    // convert from 0->1 to 0->2
+    vec2 zeroToTwo = zeroToOne * 2.0;
+ 
+    // convert from 0->2 to -1->+1 (clip space)
+    vec2 clipSpace = zeroToTwo - 1.0;
+ 
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
 }
 `
     );
@@ -377,10 +454,10 @@ function CreateFragmentShader(gl: WebGLRenderingContext): WebGLShader {
 // to pick one. mediump is a good default
 precision mediump float;
 
+uniform vec4 u_color;
+
 void main() {
-// gl_FragColor is a special variable a fragment shader
-// is responsible for setting
-gl_FragColor = vec4(1, 0, 0.5, 1); // return reddish-purple
+    gl_FragColor = u_color;
 }
 `
     );

@@ -1,15 +1,48 @@
-<div id="container">
-    <body>
-        <h1>My NeoCities Site</h1>
+<game-canvas>
+    <canvas></canvas>
+</game-canvas>
 
-        <p>
-            I am working on creating something fun within the limitations of
-            NeoCities, hopefully I can pull it off
-        </p>
+<style>
+    game-canvas,
+    canvas {
+        display: block;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
 
-        <p>
-            This site will update sporadically as I make changes, so keep
-            checking back and see how it's going!
-        </p>
-    </body>
-</div>
+<script>
+    import {
+        CreateFragmentShader,
+        CreateVertexShader,
+        LoadWebGLContext,
+        RunDemoAnimation,
+    } from '../scripts/main';
+
+    // Define the behaviour for our new type of HTML element.
+    class AstroHeart extends HTMLElement {
+        connectedCallback() {
+            const canvas = this.querySelector('canvas');
+
+            if (canvas === null) {
+                console.error('Unable to load the canvas');
+                return;
+            }
+
+            console.log('Canvas successfully loaded');
+            canvas.style.backgroundColor = '#0078D4';
+            canvas.style.position = 'fixed';
+
+            const gl = LoadWebGLContext(canvas);
+
+            var vertexShader = CreateVertexShader(gl);
+            var fragmentShader = CreateFragmentShader(gl);
+
+            RunDemoAnimation(canvas, gl, vertexShader, fragmentShader);
+        }
+    }
+
+    // Tell the browser to use our AstroHeart class for <game-canvas> elements.
+    customElements.define('game-canvas', AstroHeart);
+</script>

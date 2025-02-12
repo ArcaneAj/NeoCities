@@ -13,7 +13,11 @@
 </style>
 
 <script>
-    import { LoadWebGLContext, RunDemoAnimation } from '../scripts/main';
+    import {
+        LoadWebGLContext,
+        RunAnimation,
+        RunDemoAnimation,
+    } from '../scripts/main';
 
     // Define the behaviour for our new type of HTML element.
     class AstroHeart extends HTMLElement {
@@ -31,7 +35,8 @@
 
             const gl = LoadWebGLContext(canvas);
 
-            RunDemoAnimation(canvas, gl);
+            // RunDemoAnimation(canvas, gl);
+            RunAnimation(canvas, gl);
         }
     }
 

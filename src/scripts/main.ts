@@ -300,30 +300,47 @@ export function RunAnimation(
     // // );
     // // gl.drawArrays(gl.TRIANGLES, offset, positions.length / size);
 
-    // draw 50 random rectangles in random colors
-    for (var ii = 0; ii < 50; ++ii) {
-        // Setup a random rectangle
-        // This will write to positionBuffer because
-        // its the last thing we bound on the ARRAY_BUFFER
-        // bind point
-        const x = randomInt(gl.canvas.width - 1);
-        const y = randomInt(gl.canvas.height - 1);
-        const width = randomInt(gl.canvas.width - x);
-        const height = randomInt(gl.canvas.height - y);
-        setRectangle(gl, x, y, width, height);
+    const fps = 1;
 
-        // Set a random color.
-        gl.uniform4f(
-            colorUniformLocation,
-            Math.random(),
-            Math.random(),
-            Math.random(),
-            1
-        );
+    var fpsInterval = 1000 / fps;
+    var then = Date.now();
 
-        // Draw the rectangle.
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
+    // Create a run-loop to draw all of the confetti
+    (function frame() {
+        requestAnimationFrame(frame);
+
+        const now = Date.now();
+        const elapsed = now - then;
+        if (elapsed < fpsInterval) {
+            return;
+        }
+
+        // draw 50 random rectangles in random colors
+        for (var ii = 0; ii < 5; ++ii) {
+            then = now - (elapsed % fpsInterval);
+            // Setup a random rectangle
+            // This will write to positionBuffer because
+            // its the last thing we bound on the ARRAY_BUFFER
+            // bind point
+            const x = randomInt(gl.canvas.width - 1);
+            const y = randomInt(gl.canvas.height - 1);
+            const width = randomInt(gl.canvas.width - x);
+            const height = randomInt(gl.canvas.height - y);
+            setRectangle(gl, x, y, width, height);
+
+            // Set a random color.
+            gl.uniform4f(
+                colorUniformLocation,
+                Math.random(),
+                Math.random(),
+                Math.random(),
+                1
+            );
+
+            // Draw the rectangle.
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    })();
 }
 
 // Returns a random integer from 0 to range - 1.
@@ -352,7 +369,7 @@ function setRectangle(
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
-        gl.STATIC_DRAW
+        gl.DYNAMIC_DRAW
     );
 }
 

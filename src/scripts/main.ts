@@ -300,7 +300,7 @@ export function MovableSquare(
 
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
-    const boost = 5;
+    const speed = 10;
 
     square.top = (maxTop - square.height) / 2;
     square.left = (maxLeft - square.width) / 2;
@@ -319,10 +319,10 @@ export function MovableSquare(
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
 
-        var speed = 10;
+        var boost = 1;
 
         if (keyPressed['Shift']) {
-            speed *= boost;
+            boost = 5;
         }
 
         if (keyPressed['Control']) {
@@ -338,24 +338,29 @@ export function MovableSquare(
                 case 'ArrowUp':
                 case 'w':
                     square.top -=
-                        speed * duplicateDetection(keyPressed, 'ArrowUp', 'w');
+                        speed *
+                        boost *
+                        duplicateDetection(keyPressed, 'ArrowUp', 'w');
                     break;
                 case 'ArrowDown':
                 case 's':
                     square.top +=
                         speed *
+                        boost *
                         duplicateDetection(keyPressed, 'ArrowDown', 's');
                     break;
                 case 'ArrowLeft':
                 case 'a':
                     square.left -=
                         speed *
+                        boost *
                         duplicateDetection(keyPressed, 'ArrowLeft', 'a');
                     break;
                 case 'ArrowRight':
                 case 'd':
                     square.left +=
                         speed *
+                        boost *
                         duplicateDetection(keyPressed, 'ArrowRight', 'd');
                     break;
                 case 'r':
@@ -385,12 +390,9 @@ export function MovableSquare(
             // Set color.
             gl.uniform4f(
                 colorUniformLocation,
-                1,
-                0,
-                0,
-                // Math.random(),
-                // Math.random(),
-                // Math.random(),
+                triangular(0, 1500 / boost),
+                triangular(500 / boost, 1500 / boost),
+                triangular(1000 / boost, 1500 / boost),
                 1
             );
 
@@ -406,6 +408,16 @@ export function MovableSquare(
     canvas.addEventListener('keydown', (event: KeyboardEvent) => {
         keyPressed[event.key] = true;
     });
+}
+
+function triangular(offset: number, max: number) {
+    var value = (performance.now() + offset) % max;
+
+    if (value > max / 2) {
+        value = max - value;
+    }
+
+    return (2 * value) / max;
 }
 
 function duplicateDetection(
@@ -427,7 +439,6 @@ function ComputeSegments(
     const verticalOverlap = Math.max(square.top + square.height - maxTop, 0);
     const horizontalOverlap = Math.max(square.left + square.width - maxLeft, 0);
 
-    // console.log({ verticalOverlap, horizontalOverlap });
     const segments: SquareState[] = [square];
 
     if (horizontalOverlap > 0) {

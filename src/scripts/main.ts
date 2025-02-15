@@ -1,3 +1,5 @@
+import type { SquareState } from '../models/square-state';
+
 function CreateDemoVertexShader(gl: WebGLRenderingContext): WebGLShader {
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
     gl.shaderSource(
@@ -237,12 +239,236 @@ export function RunDemoAnimation(
     })();
 }
 
+export function MovableSquare(
+    canvas: HTMLCanvasElement,
+    gl: WebGLRenderingContext
+): void {
+    // Create program with basic quad shaders
+    const vertexShader = CreatePixelSpaceVertexShader(gl);
+    const fragmentShader = CreateSingleColourFragmentShader(gl);
+    const program = CreateProgram(gl, vertexShader, fragmentShader);
+
+    // Get attributes from above shaders
+    const positionAttributeLocation = gl.getAttribLocation(
+        program,
+        'a_position'
+    );
+    const resolutionUniformLocation = gl.getUniformLocation(
+        program,
+        'u_resolution'
+    );
+    const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+
+    // Allocate memory on gpu for position data
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    // Prepare blank canvas to draw on
+    const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+
+    // Turn on the position attribute
+    gl.enableVertexAttribArray(positionAttributeLocation);
+
+    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+    const size = 2; // 2 components per iteration (x,y)
+    const type = gl.FLOAT; // the data is 32bit floats
+    const normalize = false; // don't normalize the data
+    const stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
+    const offset = 0; // start at the beginning of the buffer
+    gl.vertexAttribPointer(
+        positionAttributeLocation,
+        size,
+        type,
+        normalize,
+        stride,
+        offset
+    );
+
+    // set the resolution in gpu memory
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+    const square: SquareState = {
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100,
+    };
+
+    var maxLeft = gl.canvas.width;
+    var maxTop = gl.canvas.height;
+    const boost = 5;
+
+    square.top = (maxTop - square.height) / 2;
+    square.left = (maxLeft - square.width) / 2;
+
+    var keyPressed: { [id: string]: boolean } = {};
+
+    // Create a run-loop to draw all of the confetti
+    (function frame() {
+        requestAnimationFrame(frame);
+
+        maxLeft = gl.canvas.width;
+        maxTop = gl.canvas.height;
+        // Reconfigure in case of resize
+        const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, maxLeft, maxTop);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
+
+        var speed = 10;
+
+        if (keyPressed['Shift']) {
+            speed *= boost;
+        }
+
+        if (keyPressed['Control']) {
+            console.log(keyPressed);
+        }
+
+        for (const key in keyPressed) {
+            if (!keyPressed[key]) {
+                continue;
+            }
+
+            switch (key) {
+                case 'ArrowUp':
+                case 'w':
+                    square.top -=
+                        speed * duplicateDetection(keyPressed, 'ArrowUp', 'w');
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    square.top +=
+                        speed *
+                        duplicateDetection(keyPressed, 'ArrowDown', 's');
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    square.left -=
+                        speed *
+                        duplicateDetection(keyPressed, 'ArrowLeft', 'a');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    square.left +=
+                        speed *
+                        duplicateDetection(keyPressed, 'ArrowRight', 'd');
+                    break;
+                case 'r':
+                    square.top = 0;
+                    square.left = 0;
+                    break;
+                case 'c':
+                    square.top = (maxTop - square.height) / 2;
+                    square.left = (maxLeft - square.width) / 2;
+                    break;
+            }
+        }
+
+        square.top = (square.top + maxTop) % maxTop;
+        square.left = (square.left + maxLeft) % maxLeft;
+
+        for (const segment of ComputeSegments(square, maxTop, maxLeft)) {
+            // draw rectangle
+            setRectangle(
+                gl,
+                segment.left,
+                segment.top,
+                segment.width,
+                segment.height
+            );
+
+            // Set color.
+            gl.uniform4f(
+                colorUniformLocation,
+                1,
+                0,
+                0,
+                // Math.random(),
+                // Math.random(),
+                // Math.random(),
+                1
+            );
+
+            // Draw the rectangle.
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    })();
+
+    canvas.addEventListener('keyup', (event: KeyboardEvent) => {
+        delete keyPressed[event.key];
+    });
+
+    canvas.addEventListener('keydown', (event: KeyboardEvent) => {
+        keyPressed[event.key] = true;
+    });
+}
+
+function duplicateDetection(
+    keyPressed: { [id: string]: boolean },
+    key1: string,
+    key2: string
+): number {
+    if (key1 in keyPressed && key2 in keyPressed) {
+        return 0.5;
+    }
+    return 1;
+}
+
+function ComputeSegments(
+    square: SquareState,
+    maxTop: number,
+    maxLeft: number
+): SquareState[] {
+    const verticalOverlap = Math.max(square.top + square.height - maxTop, 0);
+    const horizontalOverlap = Math.max(square.left + square.width - maxLeft, 0);
+
+    // console.log({ verticalOverlap, horizontalOverlap });
+    const segments: SquareState[] = [square];
+
+    if (horizontalOverlap > 0) {
+        const overlap: SquareState = {
+            left: 0,
+            top: square.top,
+            width: horizontalOverlap,
+            height: square.height,
+        };
+        segments.push(overlap);
+    }
+
+    if (verticalOverlap > 0) {
+        const overlap: SquareState = {
+            left: square.left,
+            top: 0,
+            width: square.width,
+            height: verticalOverlap,
+        };
+        segments.push(overlap);
+    }
+
+    if (horizontalOverlap > 0 && verticalOverlap > 0) {
+        const overlap: SquareState = {
+            left: 0,
+            top: 0,
+            width: horizontalOverlap,
+            height: verticalOverlap,
+        };
+        segments.push(overlap);
+    }
+
+    return segments;
+}
+
 export function RunAnimation(
     canvas: HTMLCanvasElement,
     gl: WebGLRenderingContext
 ): void {
-    const vertexShader = CreateVertexShader(gl);
-    const fragmentShader = CreateFragmentShader(gl);
+    const vertexShader = CreatePixelSpaceVertexShader(gl);
+    const fragmentShader = CreateSingleColourFragmentShader(gl);
     const program = CreateProgram(gl, vertexShader, fragmentShader);
     const positionAttributeLocation = gl.getAttribLocation(
         program,
@@ -256,23 +482,12 @@ export function RunAnimation(
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-    // // // three 2d points
-    // // const positions = [
-    // //     100, 200, 800, 200, 100, 300, 100, 300, 800, 200, 800, 300,
-    // // ];
-    // // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-    //RENDERING
-
     const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
     gl.enableVertexAttribArray(positionAttributeLocation);
-
-    // // // Bind the position buffer.
-    // // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
     // set the resolution
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
@@ -291,21 +506,12 @@ export function RunAnimation(
         stride,
         offset
     );
-    // // gl.uniform4f(
-    // //     colorUniformLocation,
-    // //     Math.random(),
-    // //     Math.random(),
-    // //     Math.random(),
-    // //     1
-    // // );
-    // // gl.drawArrays(gl.TRIANGLES, offset, positions.length / size);
 
-    const fps = 1;
+    const fps = 2;
 
-    var fpsInterval = 1000 / fps;
+    const fpsInterval = 1000 / fps;
     var then = Date.now();
 
-    // Create a run-loop to draw all of the confetti
     (function frame() {
         requestAnimationFrame(frame);
 
@@ -315,7 +521,10 @@ export function RunAnimation(
             return;
         }
 
-        // draw 50 random rectangles in random colors
+        const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        // draw 5 random rectangles in random colors
         for (var ii = 0; ii < 5; ++ii) {
             then = now - (elapsed % fpsInterval);
             // Setup a random rectangle
@@ -373,22 +582,22 @@ function setRectangle(
     );
 }
 
-function Render(
-    canvas: HTMLCanvasElement,
-    gl: WebGLRenderingContext,
-    program: WebGLProgram
-): void {}
-
 function ShouldResizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
     // Lookup the size the browser is displaying the canvas in CSS pixels.
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
+    const dpr = window.devicePixelRatio;
+    const displayWidth = Math.round(canvas.clientWidth * dpr);
+    const displayHeight = Math.round(canvas.clientHeight * dpr);
 
     // Check if the canvas is not the same size.
     const needResize =
         canvas.width !== displayWidth || canvas.height !== displayHeight;
 
     if (needResize) {
+        console.log('resizing');
+        console.log(displayHeight);
+        console.log(displayWidth);
+        console.log(canvas.height);
+        console.log(canvas.width);
         // Make the canvas the same size
         canvas.width = displayWidth;
         canvas.height = displayHeight;
@@ -435,7 +644,7 @@ function CreateShader(
     throw new Error(logInfo ?? 'Shader failed to compile');
 }
 
-function CreateVertexShader(gl: WebGLRenderingContext): WebGLShader {
+function CreatePixelSpaceVertexShader(gl: WebGLRenderingContext): WebGLShader {
     return CreateShader(
         gl,
         gl.VERTEX_SHADER,
@@ -462,7 +671,9 @@ void main() {
     );
 }
 
-function CreateFragmentShader(gl: WebGLRenderingContext): WebGLShader {
+function CreateSingleColourFragmentShader(
+    gl: WebGLRenderingContext
+): WebGLShader {
     return CreateShader(
         gl,
         gl.FRAGMENT_SHADER,

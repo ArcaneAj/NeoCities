@@ -15,6 +15,7 @@
 <script>
     import {
         LoadWebGLContext,
+        MovableSquare,
         RunAnimation,
         RunDemoAnimation,
     } from '../scripts/main';
@@ -29,6 +30,10 @@
                 return;
             }
 
+            // focus the canvas
+            canvas.setAttribute('tabindex', '0');
+            canvas.focus();
+
             console.log('Canvas successfully loaded');
             canvas.style.backgroundColor = '#000000';
             canvas.style.position = 'fixed';
@@ -36,7 +41,8 @@
             const gl = LoadWebGLContext(canvas);
 
             // RunDemoAnimation(canvas, gl);
-            RunAnimation(canvas, gl);
+            // RunAnimation(gl);
+            MovableSquare(canvas, gl);
         }
     }
 

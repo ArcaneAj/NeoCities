@@ -1,4 +1,5 @@
 import type { SquareState } from '../models/square-state';
+import type { TouchModel } from '../models/touch';
 
 function CreateDemoVertexShader(gl: WebGLRenderingContext): WebGLShader {
     const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
@@ -300,10 +301,6 @@ export function SwipableSquare(
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
 
-    var topDown: number | null = null;
-    var leftDown: number | null = null;
-    var startDown: number | null = null;
-
     var topVelocity: number = 0;
     var leftVelocity: number = 0;
 
@@ -361,13 +358,26 @@ export function SwipableSquare(
         }
     })();
 
+    var touchPath: TouchModel[] = [];
+
     canvas.addEventListener(
-        'touchstart',
+        'touchmove',
         (event: TouchEvent) => {
             event.preventDefault();
-            topDown = event.changedTouches[0].clientY;
-            leftDown = event.changedTouches[0].clientX;
-            startDown = performance.now();
+            const x = event.changedTouches[0].clientX * 2 - 50;
+            const y = event.changedTouches[0].clientY * 2 - 50;
+
+            const touch: TouchModel = {
+                top: y,
+                left: x,
+                timestamp: performance.now(),
+            };
+
+            touchPath.push(touch);
+            topVelocity = 0;
+            leftVelocity = 0;
+            square.top = y;
+            square.left = x;
         },
         { passive: false }
     );
@@ -376,27 +386,32 @@ export function SwipableSquare(
         'touchend',
         (event: TouchEvent) => {
             event.preventDefault();
-            if (topDown === null || leftDown === null || startDown === null) {
+
+            if (touchPath.length === 0) {
                 return;
             }
 
-            const topUp = event.changedTouches[0].clientY;
-            const leftUp = event.changedTouches[0].clientX;
-            const startUp = performance.now();
+            const backtrack = Math.min(touchPath.length, 5);
 
-            var leftDiff = leftUp - leftDown;
-            var topDiff = topUp - topDown;
-            var duration = (startUp - startDown) / 50;
+            var leftDiff =
+                touchPath[touchPath.length - backtrack].left -
+                touchPath[touchPath.length - 1].left;
+            var topDiff =
+                touchPath[touchPath.length - backtrack].top -
+                touchPath[touchPath.length - 1].top;
+            var duration =
+                (touchPath[touchPath.length - backtrack].timestamp -
+                    touchPath[touchPath.length - 1].timestamp) /
+                50;
 
-            console.log({ leftDiff, topDiff });
+            if (duration === 0) {
+                duration = 1000;
+            }
 
             topVelocity += topDiff / duration;
             leftVelocity += leftDiff / duration;
-            console.log({ leftVelocity, topVelocity });
 
-            topDown = null;
-            leftDown = null;
-            startDown = null;
+            touchPath = [];
         },
         { passive: false }
     );
@@ -767,11 +782,6 @@ function ShouldResizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
         canvas.width !== displayWidth || canvas.height !== displayHeight;
 
     if (needResize) {
-        console.log('resizing');
-        console.log(displayHeight);
-        console.log(displayWidth);
-        console.log(canvas.height);
-        console.log(canvas.width);
         // Make the canvas the same size
         canvas.width = displayWidth;
         canvas.height = displayHeight;

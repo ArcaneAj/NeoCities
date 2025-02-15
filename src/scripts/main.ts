@@ -308,31 +308,38 @@ export function SwipableSquare(
 
     square.top = (maxTop - square.height) / 2;
     square.left = (maxLeft - square.width) / 2;
-    // Create a run-loop to draw all of the confetti
-    (function frame() {
+
+    let curFrameTime = 0;
+    const frameRate = 60;
+    const frameDelta = 1000 / frameRate;
+
+    (function frame(time: number) {
         requestAnimationFrame(frame);
-
-        topVelocity = topVelocity * cooldown;
-        leftVelocity = leftVelocity * cooldown;
-
-        if (Math.abs(leftVelocity * topVelocity) < 0.1) {
-            topVelocity = 0;
-            leftVelocity = 0;
-        }
-
-        square.top = square.top + topVelocity;
-        square.left = square.left + leftVelocity;
 
         maxLeft = gl.canvas.width;
         maxTop = gl.canvas.height;
+
+        // UPDATE
+        while (curFrameTime < time) {
+            topVelocity = topVelocity * cooldown;
+            leftVelocity = leftVelocity * cooldown;
+
+            if (Math.abs(leftVelocity * topVelocity) < 0.1) {
+                topVelocity = 0;
+                leftVelocity = 0;
+            }
+
+            square.top = (square.top + topVelocity + maxTop) % maxTop;
+            square.left = (square.left + leftVelocity + maxLeft) % maxLeft;
+            curFrameTime += frameDelta;
+        }
+
+        // RENDER
         // Reconfigure in case of resize
         const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
         gl.viewport(0, 0, maxLeft, maxTop);
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
-
-        square.top = (square.top + maxTop) % maxTop;
-        square.left = (square.left + maxLeft) % maxLeft;
 
         for (const segment of ComputeSegments(square, maxTop, maxLeft)) {
             // draw rectangle
@@ -356,7 +363,7 @@ export function SwipableSquare(
             // Draw the rectangle.
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
-    })();
+    })(0);
 
     var touchPath: TouchModel[] = [];
 

@@ -364,8 +364,10 @@ export function SwipableSquare(
         'touchmove',
         (event: TouchEvent) => {
             event.preventDefault();
-            const x = event.changedTouches[0].clientX * 2 - 50;
-            const y = event.changedTouches[0].clientY * 2 - 50;
+            const x =
+                event.changedTouches[0].clientX * window.devicePixelRatio - 50;
+            const y =
+                event.changedTouches[0].clientY * window.devicePixelRatio - 50;
 
             const touch: TouchModel = {
                 top: y,

@@ -16,8 +16,7 @@
     import {
         LoadWebGLContext,
         MovableSquare,
-        RunAnimation,
-        RunDemoAnimation,
+        SwipableSquare,
     } from '../scripts/main';
 
     // Define the behaviour for our new type of HTML element.
@@ -40,9 +39,11 @@
 
             const gl = LoadWebGLContext(canvas);
 
-            // RunDemoAnimation(canvas, gl);
-            // RunAnimation(gl);
-            MovableSquare(canvas, gl);
+            if ((window.navigator as any).userAgentData.mobile === true) {
+                SwipableSquare(canvas, gl);
+            } else {
+                MovableSquare(canvas, gl);
+            }
         }
     }
 

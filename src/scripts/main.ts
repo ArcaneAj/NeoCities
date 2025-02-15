@@ -238,6 +238,159 @@ export function RunDemoAnimation(
         requestAnimationFrame(frame);
     })();
 }
+export function SwipableSquare(
+    canvas: HTMLCanvasElement,
+    gl: WebGLRenderingContext
+): void {
+    // Create program with basic quad shaders
+    const vertexShader = CreatePixelSpaceVertexShader(gl);
+    const fragmentShader = CreateSingleColourFragmentShader(gl);
+    const program = CreateProgram(gl, vertexShader, fragmentShader);
+
+    // Get attributes from above shaders
+    const positionAttributeLocation = gl.getAttribLocation(
+        program,
+        'a_position'
+    );
+    const resolutionUniformLocation = gl.getUniformLocation(
+        program,
+        'u_resolution'
+    );
+    const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
+
+    // Allocate memory on gpu for position data
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    // Prepare blank canvas to draw on
+    const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+
+    // Turn on the position attribute
+    gl.enableVertexAttribArray(positionAttributeLocation);
+
+    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+    const size = 2; // 2 components per iteration (x,y)
+    const type = gl.FLOAT; // the data is 32bit floats
+    const normalize = false; // don't normalize the data
+    const stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
+    const offset = 0; // start at the beginning of the buffer
+    gl.vertexAttribPointer(
+        positionAttributeLocation,
+        size,
+        type,
+        normalize,
+        stride,
+        offset
+    );
+
+    // set the resolution in gpu memory
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+    const square: SquareState = {
+        left: 0,
+        top: 0,
+        width: 100,
+        height: 100,
+    };
+
+    var maxLeft = gl.canvas.width;
+    var maxTop = gl.canvas.height;
+
+    var topDown: number | null = null;
+    var leftDown: number | null = null;
+    var startDown: number | null = null;
+
+    var topVelocity: number = 0;
+    var leftVelocity: number = 0;
+
+    const cooldown = 0.99;
+
+    square.top = (maxTop - square.height) / 2;
+    square.left = (maxLeft - square.width) / 2;
+    // Create a run-loop to draw all of the confetti
+    (function frame() {
+        requestAnimationFrame(frame);
+
+        topVelocity = topVelocity * cooldown;
+        leftVelocity = leftVelocity * cooldown;
+
+        if (Math.abs(leftVelocity * topVelocity) < 0.1) {
+            topVelocity = 0;
+            leftVelocity = 0;
+        }
+
+        square.top = square.top + topVelocity;
+        square.left = square.left + leftVelocity;
+
+        maxLeft = gl.canvas.width;
+        maxTop = gl.canvas.height;
+        // Reconfigure in case of resize
+        const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, maxLeft, maxTop);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
+
+        square.top = (square.top + maxTop) % maxTop;
+        square.left = (square.left + maxLeft) % maxLeft;
+
+        for (const segment of ComputeSegments(square, maxTop, maxLeft)) {
+            // draw rectangle
+            setRectangle(
+                gl,
+                segment.left,
+                segment.top,
+                segment.width,
+                segment.height
+            );
+
+            // Set color.
+            gl.uniform4f(
+                colorUniformLocation,
+                triangular(0, 1500),
+                triangular(500, 1500),
+                triangular(1000, 1500),
+                1
+            );
+
+            // Draw the rectangle.
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    })();
+
+    canvas.addEventListener('touchstart', (event: TouchEvent) => {
+        topDown = event.changedTouches[0].clientY;
+        leftDown = event.changedTouches[0].clientX;
+        startDown = performance.now();
+    });
+
+    canvas.addEventListener('touchend', (event: TouchEvent) => {
+        if (topDown === null || leftDown === null || startDown === null) {
+            return;
+        }
+
+        const topUp = event.changedTouches[0].clientY;
+        const leftUp = event.changedTouches[0].clientX;
+        const startUp = performance.now();
+
+        var leftDiff = leftUp - leftDown;
+        var topDiff = topUp - topDown;
+        var duration = (startUp - startDown) / 50;
+
+        console.log({ leftDiff, topDiff });
+
+        topVelocity += topDiff / duration;
+        leftVelocity += leftDiff / duration;
+        console.log({ leftVelocity, topVelocity });
+
+        topDown = null;
+        leftDown = null;
+        startDown = null;
+    });
+}
 
 export function MovableSquare(
     canvas: HTMLCanvasElement,

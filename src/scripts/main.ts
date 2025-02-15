@@ -509,11 +509,11 @@ export function MovableSquare(
         var boost = 1;
 
         if (keyPressed['Shift']) {
-            boost = 5;
+            boost *= 5;
         }
 
         if (keyPressed['Control']) {
-            console.log(keyPressed);
+            boost *= 5;
         }
 
         for (const key in keyPressed) {

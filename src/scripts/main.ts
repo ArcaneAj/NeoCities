@@ -361,35 +361,45 @@ export function SwipableSquare(
         }
     })();
 
-    canvas.addEventListener('touchstart', (event: TouchEvent) => {
-        topDown = event.changedTouches[0].clientY;
-        leftDown = event.changedTouches[0].clientX;
-        startDown = performance.now();
-    });
+    canvas.addEventListener(
+        'touchstart',
+        (event: TouchEvent) => {
+            event.preventDefault();
+            topDown = event.changedTouches[0].clientY;
+            leftDown = event.changedTouches[0].clientX;
+            startDown = performance.now();
+        },
+        { passive: false }
+    );
 
-    canvas.addEventListener('touchend', (event: TouchEvent) => {
-        if (topDown === null || leftDown === null || startDown === null) {
-            return;
-        }
+    canvas.addEventListener(
+        'touchend',
+        (event: TouchEvent) => {
+            event.preventDefault();
+            if (topDown === null || leftDown === null || startDown === null) {
+                return;
+            }
 
-        const topUp = event.changedTouches[0].clientY;
-        const leftUp = event.changedTouches[0].clientX;
-        const startUp = performance.now();
+            const topUp = event.changedTouches[0].clientY;
+            const leftUp = event.changedTouches[0].clientX;
+            const startUp = performance.now();
 
-        var leftDiff = leftUp - leftDown;
-        var topDiff = topUp - topDown;
-        var duration = (startUp - startDown) / 50;
+            var leftDiff = leftUp - leftDown;
+            var topDiff = topUp - topDown;
+            var duration = (startUp - startDown) / 50;
 
-        console.log({ leftDiff, topDiff });
+            console.log({ leftDiff, topDiff });
 
-        topVelocity += topDiff / duration;
-        leftVelocity += leftDiff / duration;
-        console.log({ leftVelocity, topVelocity });
+            topVelocity += topDiff / duration;
+            leftVelocity += leftDiff / duration;
+            console.log({ leftVelocity, topVelocity });
 
-        topDown = null;
-        leftDown = null;
-        startDown = null;
-    });
+            topDown = null;
+            leftDown = null;
+            startDown = null;
+        },
+        { passive: false }
+    );
 }
 
 export function MovableSquare(

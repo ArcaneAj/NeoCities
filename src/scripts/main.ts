@@ -73,6 +73,7 @@ v_overlight = 0.9 + glanceLighting * 0.1;
     gl.compileShader(vertexShader);
     return vertexShader;
 }
+
 function CreateDemoFragmentShader(gl: WebGLRenderingContext): WebGLShader {
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(
@@ -239,6 +240,7 @@ export function RunDemoAnimation(
         requestAnimationFrame(frame);
     })();
 }
+
 export function SwipableSquare(
     canvas: HTMLCanvasElement,
     gl: WebGLRenderingContext

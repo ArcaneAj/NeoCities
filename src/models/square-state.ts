@@ -3,4 +3,5 @@ export interface SquareState {
     top: number;
     width: number;
     height: number;
+    depth: number;
 }

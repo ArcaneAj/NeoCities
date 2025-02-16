@@ -93,6 +93,84 @@ gl_FragColor = vec4(v_color, 1.0 - smoothstep(0.8, v_overlight, length(v_positio
     return fragmentShader;
 }
 
+export function OcclusionCulling(
+    canvas: HTMLCanvasElement,
+    gl: WebGLRenderingContext
+) {
+    // Create program with basic quad shaders
+    const { resolutionUniformLocation, colorUniformLocation } =
+        CreateBasicQuadProgram(gl, canvas);
+
+    var maxLeft = gl.canvas.width;
+    var maxTop = gl.canvas.height;
+
+    const startQauds: SquareState[] = [];
+
+    startQauds.push({
+        left: 200,
+        top: 200,
+        width: 100,
+        height: 100,
+        depth: 0,
+    });
+
+    startQauds.push({
+        left: 300,
+        top: 200,
+        width: 100,
+        height: 100,
+        depth: 1,
+    });
+
+    startQauds.push({
+        left: 275,
+        top: 225,
+        width: 50,
+        height: 50,
+        depth: 1,
+    });
+
+    startQauds.push({
+        left: 15000,
+        top: 500,
+        width: 100,
+        height: 100,
+        depth: 1,
+    });
+
+    const quads: SquareState[] = Cull(startQauds, maxLeft, maxTop);
+
+    console.log(quads);
+
+    (function frame(time: number) {
+        requestAnimationFrame(frame);
+
+        // RENDER
+        // Reconfigure in case of resize
+        const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, maxLeft, maxTop);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
+
+        for (const quad of quads) {
+            // draw rectangle
+            setRectangle(gl, quad.left, quad.top, quad.width, quad.height);
+
+            // Set color.
+            gl.uniform4f(
+                colorUniformLocation,
+                triangular(0, 1500),
+                triangular(500, 1500),
+                triangular(1000, 1500),
+                1
+            );
+
+            // Draw the rectangle.
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    })(0);
+}
+
 export function LoadWebGLContext(
     canvas: HTMLCanvasElement
 ): WebGLRenderingContext {
@@ -246,58 +324,15 @@ export function SwipableSquare(
     gl: WebGLRenderingContext
 ): void {
     // Create program with basic quad shaders
-    const vertexShader = CreatePixelSpaceVertexShader(gl);
-    const fragmentShader = CreateSingleColourFragmentShader(gl);
-    const program = CreateProgram(gl, vertexShader, fragmentShader);
-
-    // Get attributes from above shaders
-    const positionAttributeLocation = gl.getAttribLocation(
-        program,
-        'a_position'
-    );
-    const resolutionUniformLocation = gl.getUniformLocation(
-        program,
-        'u_resolution'
-    );
-    const colorUniformLocation = gl.getUniformLocation(program, 'u_color');
-
-    // Allocate memory on gpu for position data
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    // Prepare blank canvas to draw on
-    const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(program);
-
-    // Turn on the position attribute
-    gl.enableVertexAttribArray(positionAttributeLocation);
-
-    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-    const size = 2; // 2 components per iteration (x,y)
-    const type = gl.FLOAT; // the data is 32bit floats
-    const normalize = false; // don't normalize the data
-    const stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
-    const offset = 0; // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionAttributeLocation,
-        size,
-        type,
-        normalize,
-        stride,
-        offset
-    );
-
-    // set the resolution in gpu memory
-    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+    const { resolutionUniformLocation, colorUniformLocation } =
+        CreateBasicQuadProgram(gl, canvas);
 
     const square: SquareState = {
         left: 0,
         top: 0,
         width: 100,
         height: 100,
+        depth: 0,
     };
 
     var maxLeft = gl.canvas.width;
@@ -428,11 +463,10 @@ export function SwipableSquare(
     );
 }
 
-export function MovableSquare(
-    canvas: HTMLCanvasElement,
-    gl: WebGLRenderingContext
-): void {
-    // Create program with basic quad shaders
+function CreateBasicQuadProgram(
+    gl: WebGLRenderingContext,
+    canvas: HTMLCanvasElement
+) {
     const vertexShader = CreatePixelSpaceVertexShader(gl);
     const fragmentShader = CreateSingleColourFragmentShader(gl);
     const program = CreateProgram(gl, vertexShader, fragmentShader);
@@ -479,12 +513,23 @@ export function MovableSquare(
 
     // set the resolution in gpu memory
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+    return { resolutionUniformLocation, colorUniformLocation };
+}
+
+export function MovableSquare(
+    canvas: HTMLCanvasElement,
+    gl: WebGLRenderingContext
+): void {
+    // Create program with basic quad shaders
+    const { resolutionUniformLocation, colorUniformLocation } =
+        CreateBasicQuadProgram(gl, canvas);
 
     const square: SquareState = {
         left: 0,
         top: 0,
         width: 100,
         height: 100,
+        depth: 0,
     };
 
     var maxLeft = gl.canvas.width;
@@ -636,6 +681,7 @@ function ComputeSegments(
             top: square.top,
             width: horizontalOverlap,
             height: square.height,
+            depth: 0,
         };
         segments.push(overlap);
     }
@@ -646,6 +692,7 @@ function ComputeSegments(
             top: 0,
             width: square.width,
             height: verticalOverlap,
+            depth: 0,
         };
         segments.push(overlap);
     }
@@ -656,6 +703,7 @@ function ComputeSegments(
             top: 0,
             width: horizontalOverlap,
             height: verticalOverlap,
+            depth: 0,
         };
         segments.push(overlap);
     }
@@ -884,4 +932,67 @@ void main() {
 }
 `
     );
+}
+
+function Cull(
+    startQauds: SquareState[],
+    maxLeft: number,
+    maxTop: number
+): SquareState[] {
+    // Frustum culling
+    const frustum: SquareState[] = startQauds.filter((x) => {
+        if (
+            x.left > maxLeft ||
+            x.top > maxTop ||
+            x.left < -x.width ||
+            x.top < -x.height
+        ) {
+            return false;
+        }
+        return true;
+    });
+
+    // Occlusion culling
+    const sorted: SquareState[] = frustum.sort((a, b) =>
+        a.depth < b.depth ? -1 : a.depth > b.depth ? 1 : 0
+    );
+
+    // First culls if entirely occluded by a single other quad
+    for (let i = 0; i < sorted.length; i++) {
+        const quad = sorted[i];
+        for (let j = 0; j < i; j++) {
+            const occluder = sorted[j];
+            if (
+                quad.top >= occluder.top &&
+                quad.top + quad.height <= occluder.top + occluder.height &&
+                quad.left >= occluder.left &&
+                quad.left + quad.width <= occluder.left + occluder.width
+            ) {
+                sorted.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // Then check if the remaining quads are occluded by a combination of quads in front of it.
+    const grid: Uint8Array = new Uint8Array(maxLeft * maxTop);
+    for (let i = 0; i < sorted.length; i++) {
+        const quad = sorted[i];
+        var occluded = true;
+        for (let y = quad.top; y < quad.top + quad.height; y++) {
+            for (let x = quad.left; x < quad.left + quad.width; x++) {
+                if (grid[x + maxLeft * y] === 0) {
+                    occluded = false;
+                    grid[x + maxLeft * y] = 1;
+                }
+            }
+        }
+
+        if (occluded) {
+            sorted.splice(i, 1);
+            i -= 1;
+        }
+    }
+
+    return sorted;
 }

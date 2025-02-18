@@ -1,15 +1,16 @@
-import type { Square } from './interfaces/square.interface';
+import type { Rectangle } from './interfaces/rectangle.interface';
 import { SolidEntity } from './solid-entity';
 
-export class SolidSquareEntity extends SolidEntity implements Square {
+export class SolidRectangleEntity extends SolidEntity implements Rectangle {
     public constructor(
         left: number,
         top: number,
         width: number,
         height: number,
-        depth: number
+        depth: number,
+        fixed: boolean
     ) {
-        super(depth);
+        super(depth, fixed);
         this.left = left;
         this.top = top;
         this.width = width;

@@ -1,4 +1,4 @@
-import { SolidSquareEntity } from '../models/solid-square-entity';
+import { SolidRectangleEntity } from '../models/solid-rectangle-entity';
 import type { TouchModel } from '../models/touch';
 
 function CreateDemoVertexShader(gl: WebGLRenderingContext): WebGLShader {
@@ -104,14 +104,14 @@ export function OcclusionCulling(
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
 
-    const startQauds: SolidSquareEntity[] = [];
+    const startQauds: SolidRectangleEntity[] = [];
 
-    startQauds.push(new SolidSquareEntity(200, 200, 100, 100, 0));
-    startQauds.push(new SolidSquareEntity(300, 200, 100, 100, 1));
-    startQauds.push(new SolidSquareEntity(275, 225, 50, 50, 2));
-    startQauds.push(new SolidSquareEntity(15000, 500, 100, 100, 1));
+    startQauds.push(new SolidRectangleEntity(200, 200, 100, 100, 0, true));
+    startQauds.push(new SolidRectangleEntity(300, 200, 100, 100, 1, true));
+    startQauds.push(new SolidRectangleEntity(275, 225, 50, 50, 2, true));
+    startQauds.push(new SolidRectangleEntity(15000, 500, 100, 100, 1, true));
 
-    const quads: SolidSquareEntity[] = Cull(startQauds, maxLeft, maxTop);
+    const quads: SolidRectangleEntity[] = Cull(startQauds, maxLeft, maxTop);
 
     console.log(quads);
 
@@ -300,7 +300,14 @@ export function SwipableSquare(
     const { resolutionUniformLocation, colorUniformLocation } =
         CreateBasicQuadProgram(gl, canvas);
 
-    const square: SolidSquareEntity = new SolidSquareEntity(0, 0, 100, 100, 0);
+    const square: SolidRectangleEntity = new SolidRectangleEntity(
+        0,
+        0,
+        100,
+        100,
+        0,
+        true
+    );
 
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
@@ -491,7 +498,14 @@ export function MovableSquare(
     const { resolutionUniformLocation, colorUniformLocation } =
         CreateBasicQuadProgram(gl, canvas);
 
-    const square: SolidSquareEntity = new SolidSquareEntity(0, 0, 100, 100, 0);
+    const square: SolidRectangleEntity = new SolidRectangleEntity(
+        0,
+        0,
+        100,
+        100,
+        0,
+        true
+    );
 
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
@@ -627,44 +641,47 @@ function duplicateDetection(
 }
 
 function ComputeSegments(
-    square: SolidSquareEntity,
+    square: SolidRectangleEntity,
     maxTop: number,
     maxLeft: number
-): SolidSquareEntity[] {
+): SolidRectangleEntity[] {
     const verticalOverlap = Math.max(square.top + square.height - maxTop, 0);
     const horizontalOverlap = Math.max(square.left + square.width - maxLeft, 0);
 
-    const segments: SolidSquareEntity[] = [square];
+    const segments: SolidRectangleEntity[] = [square];
 
     if (horizontalOverlap > 0) {
-        const overlap: SolidSquareEntity = new SolidSquareEntity(
+        const overlap: SolidRectangleEntity = new SolidRectangleEntity(
             0,
             square.top,
             horizontalOverlap,
             square.height,
-            0
+            0,
+            true
         );
         segments.push(overlap);
     }
 
     if (verticalOverlap > 0) {
-        const overlap: SolidSquareEntity = new SolidSquareEntity(
+        const overlap: SolidRectangleEntity = new SolidRectangleEntity(
             square.left,
             0,
             square.width,
             verticalOverlap,
-            0
+            0,
+            true
         );
         segments.push(overlap);
     }
 
     if (horizontalOverlap > 0 && verticalOverlap > 0) {
-        const overlap: SolidSquareEntity = new SolidSquareEntity(
+        const overlap: SolidRectangleEntity = new SolidRectangleEntity(
             0,
             0,
             horizontalOverlap,
             verticalOverlap,
-            0
+            0,
+            true
         );
         segments.push(overlap);
     }
@@ -896,12 +913,12 @@ void main() {
 }
 
 function Cull(
-    startQauds: SolidSquareEntity[],
+    startQauds: SolidRectangleEntity[],
     maxLeft: number,
     maxTop: number
-): SolidSquareEntity[] {
+): SolidRectangleEntity[] {
     // Frustum culling
-    const frustum: SolidSquareEntity[] = startQauds.filter((x) => {
+    const frustum: SolidRectangleEntity[] = startQauds.filter((x) => {
         if (
             x.left > maxLeft ||
             x.top > maxTop ||
@@ -914,7 +931,7 @@ function Cull(
     });
 
     // Occlusion culling
-    const sorted: SolidSquareEntity[] = frustum.sort((a, b) =>
+    const sorted: SolidRectangleEntity[] = frustum.sort((a, b) =>
         a.depth < b.depth ? -1 : a.depth > b.depth ? 1 : 0
     );
 

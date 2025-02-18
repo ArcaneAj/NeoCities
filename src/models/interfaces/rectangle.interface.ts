@@ -1,4 +1,4 @@
-export interface Square {
+export interface Rectangle {
     left: number;
     top: number;
     width: number;

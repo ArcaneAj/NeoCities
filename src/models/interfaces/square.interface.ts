@@ -1,7 +1,6 @@
-export interface SquareState {
+export interface Square {
     left: number;
     top: number;
     width: number;
     height: number;
-    depth: number;
 }

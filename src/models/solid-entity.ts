@@ -1,7 +1,12 @@
 import { Entity } from './entity';
 
 export class SolidEntity extends Entity {
-    public constructor(depth: number, fixed: boolean) {
-        super(depth, true, fixed);
+    public constructor(
+        left: number,
+        top: number,
+        depth: number,
+        fixed: boolean
+    ) {
+        super(left, top, depth, true, fixed);
     }
 }

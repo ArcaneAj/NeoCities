@@ -93,6 +93,176 @@ gl_FragColor = vec4(v_color, 1.0 - smoothstep(0.8, v_overlight, length(v_positio
     return fragmentShader;
 }
 
+export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
+    // Create program with basic quad shaders
+    const { resolutionUniformLocation, colorUniformLocation } =
+        CreateBasicQuadProgram(gl, canvas);
+
+    var maxLeft = gl.canvas.width;
+    var maxTop = gl.canvas.height;
+
+    const groundThickness = Math.ceil(maxTop / 10);
+
+    const player = new SolidRectangleEntity(200, 200, 100, 100, 0, false);
+    const ground = new SolidRectangleEntity(
+        0,
+        maxTop - groundThickness,
+        maxLeft,
+        groundThickness,
+        0,
+        true
+    );
+
+    const entities: SolidRectangleEntity[] = [player, ground];
+    const speed = 10;
+    const topVelocity = 5;
+
+    var keyPressed: { [id: string]: boolean } = {};
+    (function frame(time: number) {
+        requestAnimationFrame(frame);
+
+        var leftMovement: number = 0;
+        var topMovement: number = 0;
+
+        topMovement += topVelocity;
+
+        for (const key in keyPressed) {
+            if (!keyPressed[key]) {
+                continue;
+            }
+
+            switch (key) {
+                case 'ArrowUp':
+                case 'w':
+                    topMovement -=
+                        speed * duplicateDetection(keyPressed, 'ArrowUp', 'w');
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    leftMovement -=
+                        speed *
+                        duplicateDetection(keyPressed, 'ArrowLeft', 'a');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    leftMovement +=
+                        speed *
+                        duplicateDetection(keyPressed, 'ArrowRight', 'd');
+                    break;
+            }
+        }
+
+        // We bias towards horizontal movement in the case of a conflict, by evaluating it first
+        const newHorizontalState: SolidRectangleEntity = player
+            .ShallowClone()
+            .MoveTo(player.left + leftMovement, player.top);
+
+        const horizontalCollisions: SolidRectangleEntity[] = CollidesWith(
+            entities,
+            newHorizontalState
+        );
+        if (horizontalCollisions.length === 0) {
+            player.MoveTo(player.left + leftMovement, player.top);
+        }
+
+        const newVerticalState: SolidRectangleEntity = player
+            .ShallowClone()
+            .MoveTo(player.left, player.top + topMovement);
+
+        const verticalCollisions: SolidRectangleEntity[] = CollidesWith(
+            entities,
+            newVerticalState
+        );
+        if (verticalCollisions.length === 0) {
+            player.MoveTo(player.left, player.top + topMovement);
+        } else {
+            if (topMovement > 0) {
+                // Moving down
+                const topMostCollision = verticalCollisions.reduce(
+                    (prev, current) =>
+                        prev && prev.top < current.top ? prev : current
+                );
+
+                player.MoveTo(
+                    player.left,
+                    player.top +
+                        (topMostCollision.top - player.top - player.height)
+                );
+            } else {
+                // Moving up
+                const bottomMostCollision = verticalCollisions.reduce(
+                    (prev, current) =>
+                        prev &&
+                        prev.top + prev.height > current.top + current.height
+                            ? prev
+                            : current
+                );
+
+                player.MoveTo(
+                    player.left,
+                    bottomMostCollision.top + bottomMostCollision.height
+                );
+            }
+        }
+
+        // RENDER
+        // Reconfigure in case of resize
+        const shouldResize = ShouldResizeCanvasToDisplaySize(canvas);
+        gl.viewport(0, 0, maxLeft, maxTop);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, maxLeft, maxTop);
+
+        for (const quad of entities) {
+            // draw rectangle
+            setRectangle(gl, quad.left, quad.top, quad.width, quad.height);
+
+            // Set color.
+            gl.uniform4f(
+                colorUniformLocation,
+                triangular(0, 1500),
+                triangular(500, 1500),
+                triangular(1000, 1500),
+                1
+            );
+
+            // Draw the rectangle.
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    })(0);
+
+    canvas.addEventListener('keyup', (event: KeyboardEvent) => {
+        delete keyPressed[event.key];
+    });
+
+    canvas.addEventListener('keydown', (event: KeyboardEvent) => {
+        keyPressed[event.key] = true;
+    });
+}
+
+function CollidesWith(
+    entities: SolidRectangleEntity[],
+    state: SolidRectangleEntity
+): SolidRectangleEntity[] {
+    const collisions: SolidRectangleEntity[] = [];
+
+    for (const entity of entities) {
+        if (entity.id === state.id) {
+            continue;
+        }
+
+        if (
+            entity.left < state.left + state.width && // entity's left is to the left of state's right
+            entity.left + entity.width > state.left && // entity's right is to the right of state's left
+            entity.top < state.top + state.height && // entity's top is above state's bottom
+            entity.top + entity.height > state.top // entity's bottom is below state's top
+        ) {
+            collisions.push(entity);
+        }
+    }
+
+    return collisions;
+}
+
 export function OcclusionCulling(
     canvas: HTMLCanvasElement,
     gl: WebGLRenderingContext

@@ -10,15 +10,11 @@ export class SolidRectangleEntity extends SolidEntity implements Rectangle {
         depth: number,
         fixed: boolean
     ) {
-        super(depth, fixed);
-        this.left = left;
-        this.top = top;
+        super(left, top, depth, fixed);
         this.width = width;
         this.height = height;
     }
 
-    left: number;
-    top: number;
     width: number;
     height: number;
 }

@@ -14,6 +14,7 @@
 
 <script>
     import {
+        Gravity,
         LoadWebGLContext,
         MovableSquare,
         OcclusionCulling,
@@ -51,7 +52,7 @@
                 SwipableSquare(canvas, gl);
             } else {
                 // User is accessing the page on a desktop device
-                OcclusionCulling(canvas, gl);
+                Gravity(canvas, gl);
             }
         }
     }

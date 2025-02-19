@@ -145,133 +145,19 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     (function frame(time: number) {
         requestAnimationFrame(frame);
 
-        if (Touching(player, ground)) {
-            canDoubleJump = true;
-            if (player.velocityY === 0) {
-                player.velocityX = 0;
-            }
-
-            if ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) {
-                player.velocityY = -jumpSpeed;
-                jumpBuffered = false;
-            }
-        } else {
-            if (
-                ('w' in keyPressed || 'ArrowUp' in keyPressed) &&
-                player.velocityY > 30
-            ) {
-                jumpBuffered = true;
-            }
-        }
-
-        if (
-            canDoubleJump &&
-            ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) &&
-            player.velocityY > 0
-        ) {
-            player.velocityY = -jumpSpeed;
-            jumpBuffered = false;
-            canDoubleJump = false;
-        }
-
-        if ('a' in keyPressed || 'ArrowLeft' in keyPressed) {
-            player.velocityX = -speed;
-            if (Touching(player, leftWall)) {
-                player.velocityX = 0;
-            }
-        }
-        if ('d' in keyPressed || 'ArrowRight' in keyPressed) {
-            player.velocityX = speed;
-            if (Touching(player, rightWall)) {
-                player.velocityX = 0;
-            }
-        }
-
-        // We bias towards horizontal movement in the case of a conflict, by evaluating it first
-        const newHorizontalState: SolidRectangleEntity = player
-            .ShallowClone()
-            .MoveTo(player.left + player.velocityX, player.top);
-
-        const horizontalCollisions: SolidRectangleEntity[] = CollidesWith(
+        ({ canDoubleJump, jumpBuffered } = UpdateState(
+            player,
+            ground,
+            canDoubleJump,
+            keyPressed,
+            jumpBuffered,
+            jumpSpeed,
+            speed,
+            leftWall,
+            rightWall,
             entities,
-            newHorizontalState
-        );
-        if (horizontalCollisions.length === 0) {
-            player.MoveTo(player.left + player.velocityX, player.top);
-        } else {
-            if (player.velocityX < 0) {
-                // Moving left
-                const rightMostCollision = horizontalCollisions.reduce(
-                    (prev, current) =>
-                        prev && prev.left < current.left ? prev : current
-                );
-
-                player.MoveTo(
-                    rightMostCollision.left + rightMostCollision.width,
-                    player.top
-                );
-            } else {
-                // Moving right
-                const leftMostCollision = horizontalCollisions.reduce(
-                    (prev, current) =>
-                        prev &&
-                        prev.left + prev.width > current.left + current.width
-                            ? prev
-                            : current
-                );
-
-                player.MoveTo(
-                    leftMostCollision.left - player.width,
-                    player.top
-                );
-            }
-            player.velocityX = -player.velocityX * 0.5;
-        }
-
-        const newVerticalState: SolidRectangleEntity = player
-            .ShallowClone()
-            .MoveTo(player.left, player.top + player.velocityY);
-
-        const verticalCollisions: SolidRectangleEntity[] = CollidesWith(
-            entities,
-            newVerticalState
-        );
-        if (verticalCollisions.length === 0) {
-            player.MoveTo(player.left, player.top + player.velocityY);
-            if (!Touching(player, ground)) {
-                player.velocityY += gravity;
-            }
-        } else {
-            if (player.velocityY > 0) {
-                // Moving down
-                const topMostCollision = verticalCollisions.reduce(
-                    (prev, current) =>
-                        prev && prev.top < current.top ? prev : current
-                );
-
-                player.MoveTo(
-                    player.left,
-                    player.top +
-                        (topMostCollision.top - player.top - player.height)
-                );
-                player.velocityY = Math.min(0, 2 - player.velocityY * 0.5);
-            } else {
-                // Moving up
-                const bottomMostCollision = verticalCollisions.reduce(
-                    (prev, current) =>
-                        prev &&
-                        prev.top + prev.height > current.top + current.height
-                            ? prev
-                            : current
-                );
-
-                player.MoveTo(
-                    player.left,
-                    bottomMostCollision.top + bottomMostCollision.height
-                );
-                player.velocityY = 0;
-            }
-        }
+            gravity
+        ));
 
         // RENDER
         // Reconfigure in case of resize
@@ -310,6 +196,145 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     canvas.addEventListener('keydown', (event: KeyboardEvent) => {
         keyPressed[event.key] = true;
     });
+}
+
+function UpdateState(
+    player: SolidRectangleEntity,
+    ground: SolidRectangleEntity,
+    canDoubleJump: boolean,
+    keyPressed: { [id: string]: boolean },
+    jumpBuffered: boolean,
+    jumpSpeed: number,
+    speed: number,
+    leftWall: SolidRectangleEntity,
+    rightWall: SolidRectangleEntity,
+    entities: SolidRectangleEntity[],
+    gravity: number
+) {
+    if (Touching(player, ground)) {
+        canDoubleJump = true;
+        if (player.velocityY === 0) {
+            player.velocityX = 0;
+        }
+
+        if ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) {
+            player.velocityY = -jumpSpeed;
+            jumpBuffered = false;
+        }
+    } else {
+        if (
+            ('w' in keyPressed || 'ArrowUp' in keyPressed) &&
+            player.velocityY > 30
+        ) {
+            jumpBuffered = true;
+        }
+    }
+
+    if (
+        canDoubleJump &&
+        ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) &&
+        player.velocityY > 0
+    ) {
+        player.velocityY = -jumpSpeed;
+        jumpBuffered = false;
+        canDoubleJump = false;
+    }
+
+    if ('a' in keyPressed || 'ArrowLeft' in keyPressed) {
+        player.velocityX = -speed;
+        if (Touching(player, leftWall)) {
+            player.velocityX = 0;
+        }
+    }
+    if ('d' in keyPressed || 'ArrowRight' in keyPressed) {
+        player.velocityX = speed;
+        if (Touching(player, rightWall)) {
+            player.velocityX = 0;
+        }
+    }
+
+    // We bias towards horizontal movement in the case of a conflict, by evaluating it first
+    const newHorizontalState: SolidRectangleEntity = player
+        .ShallowClone()
+        .MoveTo(player.left + player.velocityX, player.top);
+
+    const horizontalCollisions: SolidRectangleEntity[] = CollidesWith(
+        entities,
+        newHorizontalState
+    );
+    if (horizontalCollisions.length === 0) {
+        player.MoveTo(player.left + player.velocityX, player.top);
+    } else {
+        if (player.velocityX < 0) {
+            // Moving left
+            const rightMostCollision = horizontalCollisions.reduce(
+                (prev, current) =>
+                    prev && prev.left < current.left ? prev : current
+            );
+
+            player.MoveTo(
+                rightMostCollision.left + rightMostCollision.width,
+                player.top
+            );
+        } else {
+            // Moving right
+            const leftMostCollision = horizontalCollisions.reduce(
+                (prev, current) =>
+                    prev &&
+                    prev.left + prev.width > current.left + current.width
+                        ? prev
+                        : current
+            );
+
+            player.MoveTo(leftMostCollision.left - player.width, player.top);
+        }
+        player.velocityX = -player.velocityX * 0.5;
+    }
+
+    const newVerticalState: SolidRectangleEntity = player
+        .ShallowClone()
+        .MoveTo(player.left, player.top + player.velocityY);
+
+    const verticalCollisions: SolidRectangleEntity[] = CollidesWith(
+        entities,
+        newVerticalState
+    );
+    if (verticalCollisions.length === 0) {
+        player.MoveTo(player.left, player.top + player.velocityY);
+        if (!Touching(player, ground)) {
+            player.velocityY += gravity;
+        }
+    } else {
+        if (player.velocityY > 0) {
+            // Moving down
+            const topMostCollision = verticalCollisions.reduce(
+                (prev, current) =>
+                    prev && prev.top < current.top ? prev : current
+            );
+
+            player.MoveTo(
+                player.left,
+                player.top + (topMostCollision.top - player.top - player.height)
+            );
+            player.velocityY = Math.min(0, 2 - player.velocityY * 0.5);
+        } else {
+            // Moving up
+            const bottomMostCollision = verticalCollisions.reduce(
+                (prev, current) =>
+                    prev &&
+                    prev.top + prev.height > current.top + current.height
+                        ? prev
+                        : current
+            );
+
+            player.MoveTo(
+                player.left,
+                bottomMostCollision.top + bottomMostCollision.height
+            );
+            player.velocityY = 0;
+        }
+    }
+    return { canDoubleJump, jumpBuffered };
 }
 
 function CollidesWith(

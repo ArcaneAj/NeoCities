@@ -14,6 +14,8 @@ export class Entity {
         this.depth = depth;
         this.solid = solid;
         this.fixed = fixed;
+        this.velocityX = 0;
+        this.velocityY = 0;
     }
 
     id: UUID;
@@ -23,6 +25,8 @@ export class Entity {
     depth: number;
     solid: boolean;
     fixed: boolean;
+    velocityX: number;
+    velocityY: number;
 
     MoveTo(left: number, top: number) {
         this.left = left;

@@ -213,7 +213,7 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                     player.top
                 );
             }
-            player.velocityX = 0;
+            player.velocityX = -player.velocityX;
         }
 
         const newVerticalState: SolidRectangleEntity = player

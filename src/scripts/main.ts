@@ -240,6 +240,7 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                     player.top +
                         (topMostCollision.top - player.top - player.height)
                 );
+                player.velocityY = 5 - player.velocityY * 0.8;
             } else {
                 // Moving up
                 const bottomMostCollision = verticalCollisions.reduce(
@@ -254,8 +255,8 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                     player.left,
                     bottomMostCollision.top + bottomMostCollision.height
                 );
+                player.velocityY = 0;
             }
-            player.velocityY = 0;
         }
 
         // RENDER

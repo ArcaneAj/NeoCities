@@ -144,6 +144,9 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
         requestAnimationFrame(frame);
 
         if (Touching(player, ground)) {
+            if (player.velocityY === 0) {
+                player.velocityX = 0;
+            }
             for (const key in keyPressed) {
                 if (!keyPressed[key]) {
                     continue;
@@ -163,15 +166,6 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                         player.velocityX = speed;
                         break;
                 }
-            }
-
-            if (
-                !('ArrowLeft' in keyPressed) &&
-                !('ArrowRight' in keyPressed) &&
-                !('a' in keyPressed) &&
-                !('d' in keyPressed)
-            ) {
-                player.velocityX = 0;
             }
         }
 
@@ -213,7 +207,7 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                     player.top
                 );
             }
-            player.velocityX = -player.velocityX;
+            player.velocityX = -player.velocityX * 0.5;
         }
 
         const newVerticalState: SolidRectangleEntity = player
@@ -226,7 +220,9 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
         );
         if (verticalCollisions.length === 0) {
             player.MoveTo(player.left, player.top + player.velocityY);
-            player.velocityY += gravity;
+            if (!Touching(player, ground)) {
+                player.velocityY += gravity;
+            }
         } else {
             if (player.velocityY > 0) {
                 // Moving down
@@ -240,7 +236,7 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
                     player.top +
                         (topMostCollision.top - player.top - player.height)
                 );
-                player.velocityY = 5 - player.velocityY * 0.8;
+                player.velocityY = Math.min(0, 2 - player.velocityY * 0.5);
             } else {
                 // Moving up
                 const bottomMostCollision = verticalCollisions.reduce(

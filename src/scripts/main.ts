@@ -210,7 +210,10 @@ function UpdateState(
     rightWall: SolidRectangleEntity,
     entities: SolidRectangleEntity[],
     gravity: number
-) {
+): {
+    canDoubleJump: boolean;
+    jumpBuffered: boolean;
+} {
     if (Touching(player, ground)) {
         canDoubleJump = true;
         if (player.velocityY === 0) {
@@ -334,6 +337,7 @@ function UpdateState(
             player.velocityY = 0;
         }
     }
+
     return { canDoubleJump, jumpBuffered };
 }
 

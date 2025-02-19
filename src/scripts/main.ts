@@ -138,34 +138,52 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     const speed = 10;
     const gravity = 1;
     const jumpSpeed = 25;
+    var jumpBuffered = false;
+    var canDoubleJump = false;
 
     var keyPressed: { [id: string]: boolean } = {};
     (function frame(time: number) {
         requestAnimationFrame(frame);
 
         if (Touching(player, ground)) {
+            canDoubleJump = true;
             if (player.velocityY === 0) {
                 player.velocityX = 0;
             }
-            for (const key in keyPressed) {
-                if (!keyPressed[key]) {
-                    continue;
-                }
 
-                switch (key) {
-                    case 'ArrowUp':
-                    case 'w':
-                        player.velocityY = -jumpSpeed;
-                        break;
-                    case 'ArrowLeft':
-                    case 'a':
-                        player.velocityX = -speed;
-                        break;
-                    case 'ArrowRight':
-                    case 'd':
-                        player.velocityX = speed;
-                        break;
-                }
+            if ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) {
+                player.velocityY = -jumpSpeed;
+                jumpBuffered = false;
+            }
+        } else {
+            if (
+                ('w' in keyPressed || 'ArrowUp' in keyPressed) &&
+                player.velocityY > 30
+            ) {
+                jumpBuffered = true;
+            }
+        }
+
+        if (
+            canDoubleJump &&
+            ('w' in keyPressed || 'ArrowUp' in keyPressed || jumpBuffered) &&
+            player.velocityY > 0
+        ) {
+            player.velocityY = -jumpSpeed;
+            jumpBuffered = false;
+            canDoubleJump = false;
+        }
+
+        if ('a' in keyPressed || 'ArrowLeft' in keyPressed) {
+            player.velocityX = -speed;
+            if (Touching(player, leftWall)) {
+                player.velocityX = 0;
+            }
+        }
+        if ('d' in keyPressed || 'ArrowRight' in keyPressed) {
+            player.velocityX = speed;
+            if (Touching(player, rightWall)) {
+                player.velocityX = 0;
             }
         }
 
@@ -266,12 +284,17 @@ export function Gravity(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
             // draw rectangle
             setRectangle(gl, quad.left, quad.top, quad.width, quad.height);
 
+            var rainbowPeriod = 1500;
+
+            if (quad === player && !canDoubleJump) {
+                rainbowPeriod = 9000;
+            }
             // Set color.
             gl.uniform4f(
                 colorUniformLocation,
-                triangular(0, 1500),
-                triangular(500, 1500),
-                triangular(1000, 1500),
+                triangular(0, rainbowPeriod),
+                triangular(rainbowPeriod / 3, rainbowPeriod),
+                triangular((2 * rainbowPeriod) / 3, rainbowPeriod),
                 1
             );
 

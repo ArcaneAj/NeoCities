@@ -227,7 +227,7 @@ function UpdateState(
     } else {
         if (
             ('w' in keyPressed || 'ArrowUp' in keyPressed) &&
-            player.velocityY > 30
+            ground.top - player.top - player.height < 150
         ) {
             jumpBuffered = true;
         }

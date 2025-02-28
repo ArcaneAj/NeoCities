@@ -13,6 +13,7 @@
 </style>
 
 <script>
+    import { JumpGame } from '../scripts/jumpgame';
     import {
         Gravity,
         LoadWebGLContext,
@@ -52,7 +53,7 @@
                 SwipableSquare(canvas, gl);
             } else {
                 // User is accessing the page on a desktop device
-                Gravity(canvas, gl);
+                JumpGame(canvas, gl);
             }
         }
     }

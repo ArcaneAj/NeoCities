@@ -1,3 +1,5 @@
+import type { UniformLocations } from '../models/interfaces/uniform-locations.interface';
+import { Scene } from '../models/scene';
 import { SolidRectangleEntity } from '../models/solid-rectangle-entity';
 import type { TouchModel } from '../models/touch';
 
@@ -341,7 +343,7 @@ function UpdateState(
     return { canDoubleJump, jumpBuffered };
 }
 
-function CollidesWith(
+export function CollidesWith(
     entities: SolidRectangleEntity[],
     state: SolidRectangleEntity
 ): SolidRectangleEntity[] {
@@ -365,7 +367,7 @@ function CollidesWith(
     return collisions;
 }
 
-function Touching(
+export function Touching(
     entity1: SolidRectangleEntity,
     entity2: SolidRectangleEntity
 ): boolean {
@@ -725,10 +727,10 @@ export function SwipableSquare(
     );
 }
 
-function CreateBasicQuadProgram(
+export function CreateBasicQuadProgram(
     gl: WebGLRenderingContext,
     canvas: HTMLCanvasElement
-) {
+): UniformLocations {
     const vertexShader = CreatePixelSpaceVertexShader(gl);
     const fragmentShader = CreateSingleColourFragmentShader(gl);
     const program = CreateProgram(gl, vertexShader, fragmentShader);
@@ -1084,11 +1086,6 @@ function setRectangle(
     var y1 = y;
     var y2 = y + height;
 
-    // NOTE: gl.bufferData(gl.ARRAY_BUFFER, ...) will affect
-    // whatever buffer is bound to the `ARRAY_BUFFER` bind point
-    // but so far we only have one buffer. If we had more than one
-    // buffer we'd want to bind that buffer to `ARRAY_BUFFER` first.
-
     gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
@@ -1096,7 +1093,7 @@ function setRectangle(
     );
 }
 
-function ShouldResizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
+export function ShouldResizeCanvasToDisplaySize(canvas: HTMLCanvasElement) {
     // Lookup the size the browser is displaying the canvas in CSS pixels.
     const dpr = window.devicePixelRatio;
     const displayWidth = Math.round(canvas.clientWidth * dpr);

@@ -114,12 +114,12 @@ export class Scene {
             const nextSceneOffset = entity.UpdateGameState(
                 this,
                 keyPressed,
-                maxTop
+                maxTop,
+                maxLeft
             );
             if (nextSceneOffset > 0) {
                 if (this.next === null) {
                     this.next = this.GenerateNext(maxLeft, maxTop);
-                    console.log(this.next);
                 }
                 this.entities = this.entities.filter((x) => x !== entity);
                 this.next.AddEntity(entity);
@@ -128,6 +128,9 @@ export class Scene {
             }
             if (nextSceneOffset < 0) {
                 if (this.previous === null) {
+                    console.error(
+                        'How did you managed to get below the first floor? You must have clipped outside the walls somehow'
+                    );
                     window.location.reload();
                     throw new Error(
                         'This should not be possible, how did you get here after the page reloaded?'
@@ -205,7 +208,6 @@ export class Scene {
         );
 
         // Generate at least one reachable box
-        console.log(this.GetSolidEntities());
         const lastBox = this.GetSolidEntities().reduce((prev, next) =>
             next.height > maxTop || prev.top < next.top ? prev : next
         );

@@ -22,7 +22,8 @@ export class Player extends SolidRectangleEntity {
     UpdateGameState(
         scene: Scene,
         keyPressed: { [id: string]: boolean },
-        maxTop: number
+        maxTop: number,
+        maxLeft: number
     ): number {
         this.velocityX = this.velocityX * AIR_RESISTANCE;
         if (this.TouchingBottom(scene)) {
@@ -69,10 +70,17 @@ export class Player extends SolidRectangleEntity {
                         prev && prev.left < current.left ? prev : current
                 );
 
-                this.MoveTo(
-                    rightMostCollision.left + rightMostCollision.width,
-                    this.top
-                );
+                if (
+                    rightMostCollision.left + rightMostCollision.width + 100 >
+                    maxLeft
+                ) {
+                    this.MoveTo(rightMostCollision.left - this.width, this.top);
+                } else {
+                    this.MoveTo(
+                        rightMostCollision.left + rightMostCollision.width,
+                        this.top
+                    );
+                }
             } else {
                 // Moving right
                 const leftMostCollision = horizontalCollisions.reduce(
@@ -83,7 +91,14 @@ export class Player extends SolidRectangleEntity {
                             : current
                 );
 
-                this.MoveTo(leftMostCollision.left - this.width, this.top);
+                if (leftMostCollision.left - this.width - 100 < 0) {
+                    this.MoveTo(
+                        leftMostCollision.left + leftMostCollision.width,
+                        this.top
+                    );
+                } else {
+                    this.MoveTo(leftMostCollision.left - this.width, this.top);
+                }
             }
             this.velocityX = -this.velocityX * 0.5;
         }

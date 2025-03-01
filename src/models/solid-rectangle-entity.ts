@@ -27,7 +27,8 @@ export class SolidRectangleEntity
     UpdateGameState(
         scene: Scene,
         keyPressed: { [id: string]: boolean },
-        maxTop: number
+        maxTop: number,
+        maxLeft: number
     ): number {
         return 0;
     }

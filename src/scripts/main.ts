@@ -403,8 +403,6 @@ export function OcclusionCulling(
 
     const quads: SolidRectangleEntity[] = Cull(startQauds, maxLeft, maxTop);
 
-    console.log(quads);
-
     (function frame(time: number) {
         requestAnimationFrame(frame);
 

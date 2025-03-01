@@ -49,13 +49,13 @@ export class Player extends SolidRectangleEntity {
         }
 
         // We bias towards horizontal movement in the case of a conflict, by evaluating it first
-        const newHorizontalState: SolidRectangleEntity =
-            this.ShallowClone().MoveTo(this.left + this.velocityX, this.top);
-
-        const horizontalCollisions: SolidRectangleEntity[] = CollidesWith(
-            scene.entities.map((x) => x as SolidRectangleEntity),
-            newHorizontalState
+        const newHorizontalState: Player = this.ShallowClone().MoveTo(
+            this.left + this.velocityX,
+            this.top
         );
+
+        const horizontalCollisions: SolidRectangleEntity[] =
+            scene.CollidesWith(newHorizontalState);
         if (horizontalCollisions.length === 0) {
             this.MoveTo(this.left + this.velocityX, this.top);
         } else {
@@ -90,10 +90,8 @@ export class Player extends SolidRectangleEntity {
             this.top + this.velocityY
         );
 
-        const verticalCollisions: SolidRectangleEntity[] = CollidesWith(
-            scene.entities.map((x) => x as SolidRectangleEntity),
-            newVerticalState
-        );
+        const verticalCollisions: SolidRectangleEntity[] =
+            scene.CollidesWith(newVerticalState);
 
         if (verticalCollisions.length === 0) {
             this.MoveTo(this.left, this.top + this.velocityY);
@@ -136,9 +134,7 @@ export class Player extends SolidRectangleEntity {
     }
 
     private TouchingBottom(scene: Scene): boolean {
-        for (const entity of scene.entities
-            .filter((x) => x.id !== this.id && x.IsSolid())
-            .map((x) => x as SolidRectangleEntity)) {
+        for (const entity of scene.GetSolidEntities()) {
             if (
                 this.top + this.height === entity.top &&
                 this.left < entity.left + entity.width && // Player left is to the left of entity right
@@ -151,9 +147,7 @@ export class Player extends SolidRectangleEntity {
     }
 
     private TouchingLeft(scene: Scene): boolean {
-        for (const entity of scene.entities
-            .filter((x) => x.id !== this.id && x.IsSolid())
-            .map((x) => x as SolidRectangleEntity)) {
+        for (const entity of scene.GetSolidEntities()) {
             if (
                 this.left === entity.left + entity.width &&
                 this.top < entity.top + entity.height && // Player top is above entity bottom
@@ -166,9 +160,7 @@ export class Player extends SolidRectangleEntity {
     }
 
     private TouchingRight(scene: Scene): boolean {
-        for (const entity of scene.entities
-            .filter((x) => x.id !== this.id && x.IsSolid())
-            .map((x) => x as SolidRectangleEntity)) {
+        for (const entity of scene.GetSolidEntities()) {
             if (
                 this.left + this.width === entity.left &&
                 this.top < entity.top + entity.height && // Player top is above entity bottom

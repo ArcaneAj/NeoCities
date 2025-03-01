@@ -250,7 +250,6 @@ export class Scene {
             const box = sorted[i];
             if (box.top - previousTop < 250) {
                 box.top = previousTop + 250;
-                console.log(box.top);
             }
             previousTop = box.top;
         }

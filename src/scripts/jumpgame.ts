@@ -93,6 +93,17 @@ function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
 
     const BOX_WIDTH = 300;
     const BOX_SCREEN_MIDDLE = (maxLeft - BOX_WIDTH) / 2;
+
+    scene.AddEntity(
+        new SolidRectangleEntity(
+            BOX_SCREEN_MIDDLE - 500,
+            groundHeight - 150,
+            BOX_WIDTH,
+            50,
+            0,
+            true
+        )
+    );
     scene.AddEntity(
         new SolidRectangleEntity(
             BOX_SCREEN_MIDDLE,
@@ -106,16 +117,22 @@ function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
     scene.AddEntity(
         new SolidRectangleEntity(
             BOX_SCREEN_MIDDLE + 400,
-            groundHeight - 600,
+            groundHeight - 450,
             BOX_WIDTH,
             50,
             0,
             true
         )
     );
-    // const box2 = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
-    // const box3 = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
-    // scene.AddEntity(box2);
-    // scene.AddEntity(box3);
+    scene.AddEntity(
+        new SolidRectangleEntity(
+            BOX_SCREEN_MIDDLE - 200,
+            groundHeight - 700,
+            BOX_WIDTH,
+            50,
+            0,
+            true
+        )
+    );
     return scene;
 }

@@ -128,8 +128,12 @@ export class Scene {
             }
             if (nextSceneOffset < 0) {
                 if (this.previous === null) {
-                    throw new Error(
+                    alert(
                         'This should not be possible, how did you fall out of the world?'
+                    );
+                    window.location.reload();
+                    throw new Error(
+                        'This should not be possible, how did you get here after the page reloaded?'
                     );
                 }
                 this.entities = this.entities.filter((x) => x !== entity);

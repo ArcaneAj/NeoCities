@@ -5,7 +5,7 @@ import type { RenderableEntity } from './renderable-entity';
 import { SolidRectangleEntity } from './solid-rectangle-entity';
 export const BOX_WIDTH = 300;
 
-const DIM = 10;
+const DIM = 5;
 
 const MARK_SIZE = 30;
 const MARK_SPACE = 20;
@@ -81,7 +81,7 @@ export class Scene {
 
         const offset = 750;
 
-        const prestige = this.index > DIM ** DIM - 1;
+        const prestige = this.index > DIM ** (DIM - 1) - 1;
 
         // Set color.
         gl.uniform4f(
@@ -128,9 +128,6 @@ export class Scene {
             }
             if (nextSceneOffset < 0) {
                 if (this.previous === null) {
-                    alert(
-                        'This should not be possible, how did you fall out of the world?'
-                    );
                     window.location.reload();
                     throw new Error(
                         'This should not be possible, how did you get here after the page reloaded?'

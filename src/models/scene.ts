@@ -210,17 +210,7 @@ export class Scene {
             next.height > maxTop || prev.top < next.top ? prev : next
         );
 
-        console.log(lastBox.top);
-
         const lastLeft = lastBox.left;
-
-        if (lastLeft < BOX_WIDTH / 2) {
-            //MUST BE RIGHT
-        }
-
-        if (lastLeft > maxLeft - BOX_WIDTH / 2) {
-            //MUST BE LEFT
-        }
         var prevTop = maxTop - 300 + lastBox.top;
 
         const initOffset =
@@ -233,12 +223,6 @@ export class Scene {
 
         // Generate random boxes until we're within 300 of top
         while (prevTop > 0) {
-            console.log(prevTop);
-
-            if (prevTop < 75) {
-                prevTop = 75;
-                console.log('overriding with 75');
-            }
             scene.GenerateBox(prevLeft, prevTop);
             var offset = randomIntFromInterval(150, 600) * positiveOrNegative();
 
@@ -256,6 +240,17 @@ export class Scene {
             );
 
             prevTop = prevTop - randomIntFromInterval(200, 300);
+        }
+
+        const sorted = scene.GetSolidEntities().sort((a, b) => a.top - b.top);
+        var previousTop = -175;
+        for (let i = 0; i < sorted.length; i++) {
+            const box = sorted[i];
+            if (box.top - previousTop < 250) {
+                box.top = previousTop + 250;
+                console.log(box.top);
+            }
+            previousTop = box.top;
         }
 
         scene.AddEntity(leftWall);

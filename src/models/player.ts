@@ -1,4 +1,3 @@
-import { CollidesWith } from '../scripts/main';
 import type { Scene } from './scene';
 import { SolidRectangleEntity } from './solid-rectangle-entity';
 

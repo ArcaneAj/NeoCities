@@ -1,5 +1,5 @@
 import { Player } from '../models/player';
-import { Scene } from '../models/scene';
+import { BOX_WIDTH, Scene } from '../models/scene';
 import { SolidRectangleEntity } from '../models/solid-rectangle-entity';
 import {
     CreateBasicQuadProgram,
@@ -25,7 +25,7 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
         requestAnimationFrame(frame);
 
         while (currentTickTime < time) {
-            scene = scene.UpdateGameState(keyPressed, maxTop);
+            scene = scene.UpdateGameState(keyPressed, maxLeft, maxTop);
             currentTickTime += TICK_DURATION;
         }
 
@@ -90,49 +90,13 @@ function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
     scene.AddEntity(rightWall);
 
     // MAX PLAYER JUMP IS 325
+    // MAX PLAYER HORIZONTAL IS 600 on flat
 
-    const BOX_WIDTH = 300;
     const BOX_SCREEN_MIDDLE = (maxLeft - BOX_WIDTH) / 2;
 
-    scene.AddEntity(
-        new SolidRectangleEntity(
-            BOX_SCREEN_MIDDLE - 500,
-            groundHeight - 150,
-            BOX_WIDTH,
-            50,
-            0,
-            true
-        )
-    );
-    scene.AddEntity(
-        new SolidRectangleEntity(
-            BOX_SCREEN_MIDDLE,
-            groundHeight - 300,
-            BOX_WIDTH,
-            50,
-            0,
-            true
-        )
-    );
-    scene.AddEntity(
-        new SolidRectangleEntity(
-            BOX_SCREEN_MIDDLE + 400,
-            groundHeight - 450,
-            BOX_WIDTH,
-            50,
-            0,
-            true
-        )
-    );
-    scene.AddEntity(
-        new SolidRectangleEntity(
-            BOX_SCREEN_MIDDLE - 200,
-            groundHeight - 700,
-            BOX_WIDTH,
-            50,
-            0,
-            true
-        )
-    );
+    scene.GenerateBox(BOX_SCREEN_MIDDLE - 500, groundHeight - 150);
+    scene.GenerateBox(BOX_SCREEN_MIDDLE, groundHeight - 300);
+    scene.GenerateBox(BOX_SCREEN_MIDDLE + 400, groundHeight - 450);
+    scene.GenerateBox(BOX_SCREEN_MIDDLE - 200, groundHeight - 700);
     return scene;
 }

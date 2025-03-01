@@ -1,7 +1,8 @@
 import type { Entity } from './entity';
 import type { UniformLocations } from './interfaces/uniform-locations.interface';
 import type { RenderableEntity } from './renderable-entity';
-import type { SolidRectangleEntity } from './solid-rectangle-entity';
+import { SolidRectangleEntity } from './solid-rectangle-entity';
+export const BOX_WIDTH = 300;
 
 export class Scene {
     Draw(gl: WebGLRenderingContext, uniformLocations: UniformLocations) {
@@ -23,6 +24,7 @@ export class Scene {
 
     UpdateGameState(
         keyPressed: { [id: string]: boolean },
+        maxLeft: number,
         maxTop: number
     ): Scene {
         for (let i = 0; i < this.entities.length; i++) {
@@ -34,21 +36,20 @@ export class Scene {
             );
             if (nextSceneOffset > 0) {
                 if (this.next === null) {
-                    this.next = new Scene();
+                    this.next = this.GenerateNext(maxLeft, maxTop);
+                    console.log(this.next);
                 }
                 this.entities = this.entities.filter((x) => x !== entity);
                 this.next.AddEntity(entity);
                 this.next.AddPrevious(this);
-                console.log('next');
                 return this.next;
             }
             if (nextSceneOffset < 0) {
                 if (this.previous === null) {
-                    this.previous = new Scene();
+                    throw new Error('This should not be possible');
                 }
                 this.entities = this.entities.filter((x) => x !== entity);
                 this.previous.AddEntity(entity);
-                console.log('previous');
                 return this.previous;
             }
         }
@@ -97,4 +98,99 @@ export class Scene {
 
         return collisions;
     }
+
+    GenerateNext(maxLeft: number, maxTop: number): Scene {
+        const scene = new Scene();
+
+        const leftWall = new SolidRectangleEntity(
+            -2,
+            -500,
+            4,
+            maxTop + 1000,
+            0,
+            true
+        );
+        const rightWall = new SolidRectangleEntity(
+            maxLeft - 2,
+            -500,
+            4,
+            maxTop + 1000,
+            0,
+            true
+        );
+
+        // Generate at least one reachable box
+        console.log(this.GetSolidEntities());
+        const lastBox = this.GetSolidEntities().reduce((prev, next) =>
+            next.height > maxTop || prev.top < next.top ? prev : next
+        );
+
+        console.log(lastBox.top);
+
+        const lastLeft = lastBox.left;
+
+        if (lastLeft < BOX_WIDTH / 2) {
+            //MUST BE RIGHT
+        }
+
+        if (lastLeft > maxLeft - BOX_WIDTH / 2) {
+            //MUST BE LEFT
+        }
+        var prevTop = maxTop - 300 + lastBox.top;
+
+        const initOffset =
+            randomIntFromInterval(150, 600) * positiveOrNegative();
+        // PICK A NUMBER BETWEEN +- 600 of the last spot
+        var prevLeft = Math.min(
+            Math.max(0, lastLeft + initOffset),
+            maxLeft - BOX_WIDTH
+        );
+
+        // Generate random boxes until we're within 300 of top
+        while (prevTop > 0) {
+            console.log(prevTop);
+
+            if (prevTop < 100) {
+                prevTop = 100;
+                console.log('overriding with 100');
+            }
+            scene.GenerateBox(prevLeft, prevTop);
+            var offset = randomIntFromInterval(150, 600) * positiveOrNegative();
+
+            if (
+                prevLeft + offset + BOX_WIDTH > maxLeft ||
+                prevLeft + offset < 0
+            ) {
+                offset = -offset;
+            }
+
+            // PICK A NUMBER BETWEEN +- 600 of the last spot
+            prevLeft = Math.min(
+                Math.max(0, prevLeft + offset),
+                maxLeft - BOX_WIDTH
+            );
+
+            prevTop = prevTop - randomIntFromInterval(150, 300);
+        }
+
+        scene.AddEntity(leftWall);
+        scene.AddEntity(rightWall);
+
+        return scene;
+    }
+
+    GenerateBox(left: number, top: number): void {
+        this.entities.push(
+            new SolidRectangleEntity(left, top, BOX_WIDTH, 50, 0, true)
+        );
+    }
+}
+
+function randomIntFromInterval(min: number, max: number): number {
+    // min and max inclusive
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function positiveOrNegative(): number {
+    return Math.floor(Math.random() * 2) * 2 - 1;
 }

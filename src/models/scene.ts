@@ -6,21 +6,30 @@ export const BOX_WIDTH = 300;
 
 export class Scene {
     Draw(gl: WebGLRenderingContext, uniformLocations: UniformLocations) {
+        const canvas = gl.canvas as HTMLCanvasElement;
+
+        canvas.style.backgroundImage = 'url(/' + this.index + '.png)';
+        canvas.style.backgroundSize = 'contain';
+        canvas.style.backgroundRepeat = 'no-repeat';
+        canvas.style.backgroundPosition = 'center center';
+
         const entities = this.GetEntitiesToDraw();
         for (const entity of entities) {
             entity.Draw(gl, uniformLocations);
         }
     }
 
-    public constructor(scene: Scene | null = null) {
+    public constructor(index: number = 0) {
         this.entities = [];
-        this.previous = scene;
+        this.previous = null;
         this.next = null;
+        this.index = index;
     }
 
     private entities: Entity[];
     private previous: Scene | null;
     private next: Scene | null;
+    private index: number;
 
     UpdateGameState(
         keyPressed: { [id: string]: boolean },
@@ -100,7 +109,7 @@ export class Scene {
     }
 
     GenerateNext(maxLeft: number, maxTop: number): Scene {
-        const scene = new Scene();
+        const scene = new Scene(this.index + 1);
 
         const leftWall = new SolidRectangleEntity(
             -2,

@@ -68,12 +68,19 @@ function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
         true
     );
 
-    const leftWall = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
+    const leftWall = new SolidRectangleEntity(
+        -2,
+        -500,
+        4,
+        maxTop + 1000,
+        0,
+        true
+    );
     const rightWall = new SolidRectangleEntity(
         maxLeft - 2,
-        -1,
+        -500,
         4,
-        maxTop,
+        maxTop + 1000,
         0,
         true
     );
@@ -85,10 +92,21 @@ function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
     // MAX PLAYER JUMP IS 325
 
     const BOX_WIDTH = 300;
+    const BOX_SCREEN_MIDDLE = (maxLeft - BOX_WIDTH) / 2;
     scene.AddEntity(
         new SolidRectangleEntity(
-            (maxLeft - BOX_WIDTH) / 2,
+            BOX_SCREEN_MIDDLE,
             groundHeight - 300,
+            BOX_WIDTH,
+            50,
+            0,
+            true
+        )
+    );
+    scene.AddEntity(
+        new SolidRectangleEntity(
+            BOX_SCREEN_MIDDLE + 400,
+            groundHeight - 600,
             BOX_WIDTH,
             50,
             0,

@@ -20,7 +20,11 @@ export class Player extends SolidRectangleEntity {
         this.velocityX = 10;
     }
 
-    UpdateGameState(scene: Scene, keyPressed: { [id: string]: boolean }): void {
+    UpdateGameState(
+        scene: Scene,
+        keyPressed: { [id: string]: boolean },
+        maxTop: number
+    ): number {
         this.velocityX = this.velocityX * AIR_RESISTANCE;
         if (this.TouchingBottom(scene)) {
             if (this.velocityY === 0) {
@@ -131,6 +135,18 @@ export class Player extends SolidRectangleEntity {
                 this.velocityY = 0;
             }
         }
+
+        if (this.top < -this.height / 2) {
+            this.top = this.top + maxTop;
+            return 1;
+        }
+
+        if (this.top + this.height / 2 > maxTop) {
+            this.top = this.top - maxTop;
+            return -1;
+        }
+
+        return 0;
     }
 
     private TouchingBottom(scene: Scene): boolean {

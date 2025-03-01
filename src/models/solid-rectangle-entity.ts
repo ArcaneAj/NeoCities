@@ -26,8 +26,11 @@ export class SolidRectangleEntity
 
     UpdateGameState(
         scene: Scene,
-        keyPressed: { [id: string]: boolean }
-    ): void {}
+        keyPressed: { [id: string]: boolean },
+        maxTop: number
+    ): number {
+        return 0;
+    }
 
     public constructor(
         left: number,

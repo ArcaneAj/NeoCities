@@ -17,6 +17,7 @@ export abstract class Entity {
 
     abstract UpdateGameState(
         scene: Scene,
-        keyPressed: { [id: string]: boolean }
-    ): void;
+        keyPressed: { [id: string]: boolean },
+        maxTop: number
+    ): number;
 }

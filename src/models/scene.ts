@@ -21,19 +21,47 @@ export class Scene {
     private previous: Scene | null;
     private next: Scene | null;
 
-    UpdateGameState(keyPressed: { [id: string]: boolean }): void {
+    UpdateGameState(
+        keyPressed: { [id: string]: boolean },
+        maxTop: number
+    ): Scene {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
-            entity.UpdateGameState(this, keyPressed);
+            const nextSceneOffset = entity.UpdateGameState(
+                this,
+                keyPressed,
+                maxTop
+            );
+            if (nextSceneOffset > 0) {
+                if (this.next === null) {
+                    this.next = new Scene();
+                }
+                this.entities = this.entities.filter((x) => x !== entity);
+                this.next.AddEntity(entity);
+                this.next.AddPrevious(this);
+                console.log('next');
+                return this.next;
+            }
+            if (nextSceneOffset < 0) {
+                if (this.previous === null) {
+                    this.previous = new Scene();
+                }
+                this.entities = this.entities.filter((x) => x !== entity);
+                this.previous.AddEntity(entity);
+                console.log('previous');
+                return this.previous;
+            }
         }
+
+        return this;
     }
 
     AddEntity(entity: Entity): void {
         this.entities.push(entity);
     }
 
-    AddNext(scene: Scene) {
-        this.next = scene;
+    AddPrevious(scene: Scene) {
+        this.previous = scene;
     }
 
     GetEntitiesToDraw(): RenderableEntity[] {

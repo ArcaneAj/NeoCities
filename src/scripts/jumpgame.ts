@@ -14,7 +14,7 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     var maxTop = gl.canvas.height;
 
     const player = new Player(200, 200, 100, 100, 0);
-    const scene: Scene = CreateBaseScene(maxTop, maxLeft, player);
+    var scene: Scene = CreateBaseScene(maxTop, maxLeft, player);
 
     let currentTickTime = 0;
     const TICK_PER_SECOND = 60;
@@ -25,7 +25,7 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
         requestAnimationFrame(frame);
 
         while (currentTickTime < time) {
-            scene.UpdateGameState(keyPressed);
+            scene = scene.UpdateGameState(keyPressed, maxTop);
             currentTickTime += TICK_DURATION;
         }
 

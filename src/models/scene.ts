@@ -1,17 +1,43 @@
+import { triangular } from '../utils/triangle.util';
 import type { Entity } from './entity';
 import type { UniformLocations } from './interfaces/uniform-locations.interface';
 import type { RenderableEntity } from './renderable-entity';
 import { SolidRectangleEntity } from './solid-rectangle-entity';
 export const BOX_WIDTH = 300;
 
-export class Scene {
-    Draw(gl: WebGLRenderingContext, uniformLocations: UniformLocations) {
-        const canvas = gl.canvas as HTMLCanvasElement;
+const DIM = 10;
 
-        canvas.style.backgroundImage = 'url(/' + this.index + '.png)';
-        canvas.style.backgroundSize = 'contain';
-        canvas.style.backgroundRepeat = 'no-repeat';
-        canvas.style.backgroundPosition = 'center center';
+const MARK_SIZE = 30;
+const MARK_SPACE = 20;
+
+const TOTAL_SIZE = MARK_SIZE * (DIM - 1) + MARK_SPACE * (DIM - 2);
+
+export class Scene {
+    Draw(
+        gl: WebGLRenderingContext,
+        uniformLocations: UniformLocations,
+        maxLeft: number,
+        maxTop: number
+    ) {
+        const counts = GetDigits(this.index);
+
+        const midLeft = maxLeft / 2;
+        const midTop = maxTop / 2;
+        const minLeft = midLeft - TOTAL_SIZE / 2;
+        const minTop = midTop - TOTAL_SIZE / 2;
+
+        for (let row = 0; row < DIM - 1; row++) {
+            for (let col = 0; col < DIM - 1; col++) {
+                const topOffset = row * (MARK_SIZE + MARK_SPACE);
+                const leftOffset = col * (MARK_SIZE + MARK_SPACE);
+
+                const left = minLeft + leftOffset;
+                const top = minTop + topOffset;
+                const lit = counts[row] > col;
+                // prettier-ignore
+                this.DrawMark(gl, uniformLocations, left, top, lit);
+            }
+        }
 
         const entities = this.GetEntitiesToDraw();
         for (const entity of entities) {
@@ -30,6 +56,53 @@ export class Scene {
     private previous: Scene | null;
     private next: Scene | null;
     private index: number;
+
+    private DrawMark(
+        gl: WebGLRenderingContext,
+        uniformLocations: UniformLocations,
+        left: number,
+        top: number,
+        lit: boolean
+    ) {
+        const vertices: Float32Array = new Float32Array([
+            left,
+            top, // top left
+            left,
+            top + MARK_SIZE, // bottom left
+            left + MARK_SIZE,
+            top + MARK_SIZE, // bottom right
+            left + MARK_SIZE,
+            top, // top right
+        ]);
+
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+
+        const rainbowPeriod = 1500;
+
+        const offset = 750;
+
+        const prestige = this.index > DIM ** DIM - 1;
+
+        // Set color.
+        gl.uniform4f(
+            uniformLocations.colorUniformLocation,
+            lit ? triangular(offset, rainbowPeriod) : prestige ? 1 : 0.5,
+            lit
+                ? triangular(offset + rainbowPeriod / 3, rainbowPeriod)
+                : prestige
+                ? 1
+                : 0.5,
+            lit
+                ? triangular(offset + (2 * rainbowPeriod) / 3, rainbowPeriod)
+                : prestige
+                ? 0.5
+                : 0.5,
+            1
+        );
+
+        // Draw the entity.
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
+    }
 
     UpdateGameState(
         keyPressed: { [id: string]: boolean },
@@ -55,7 +128,9 @@ export class Scene {
             }
             if (nextSceneOffset < 0) {
                 if (this.previous === null) {
-                    throw new Error('This should not be possible');
+                    throw new Error(
+                        'This should not be possible, how did you fall out of the world?'
+                    );
                 }
                 this.entities = this.entities.filter((x) => x !== entity);
                 this.previous.AddEntity(entity);
@@ -159,9 +234,9 @@ export class Scene {
         while (prevTop > 0) {
             console.log(prevTop);
 
-            if (prevTop < 100) {
-                prevTop = 100;
-                console.log('overriding with 100');
+            if (prevTop < 75) {
+                prevTop = 75;
+                console.log('overriding with 75');
             }
             scene.GenerateBox(prevLeft, prevTop);
             var offset = randomIntFromInterval(150, 600) * positiveOrNegative();
@@ -179,7 +254,7 @@ export class Scene {
                 maxLeft - BOX_WIDTH
             );
 
-            prevTop = prevTop - randomIntFromInterval(150, 300);
+            prevTop = prevTop - randomIntFromInterval(200, 300);
         }
 
         scene.AddEntity(leftWall);
@@ -193,6 +268,12 @@ export class Scene {
             new SolidRectangleEntity(left, top, BOX_WIDTH, 50, 0, true)
         );
     }
+}
+
+function GetDigits(num: number) {
+    return Array.from(Array(DIM).keys()).map(
+        (x) => Math.floor(num / DIM ** x) % DIM
+    );
 }
 
 function randomIntFromInterval(min: number, max: number): number {

@@ -40,7 +40,7 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
             maxTop
         );
 
-        scene.Draw(gl, uniformLocations);
+        scene.Draw(gl, uniformLocations, maxLeft, maxTop);
     })(0);
 
     canvas.addEventListener('keyup', (event: KeyboardEvent) => {

@@ -11,11 +11,9 @@ export class Scene {
     }
 
     public constructor() {
-        this.children = [];
         this.entities = [];
     }
 
-    children: Scene[];
     entities: Entity[];
 
     UpdateGameState(keyPressed: { [id: string]: boolean }): void {
@@ -27,10 +25,6 @@ export class Scene {
 
     AddEntity(entity: Entity): void {
         this.entities.push(entity);
-    }
-
-    AddChildScene(scene: Scene): void {
-        this.children.push(scene);
     }
 
     GetEntitiesToDraw(): RenderableEntity[] {

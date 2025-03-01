@@ -17,7 +17,7 @@ export class Player extends SolidRectangleEntity {
         depth: number
     ) {
         super(left, top, width, height, depth, false);
-        this.velocityX = 5;
+        this.velocityX = 10;
     }
 
     UpdateGameState(scene: Scene, keyPressed: { [id: string]: boolean }): void {
@@ -43,6 +43,9 @@ export class Player extends SolidRectangleEntity {
             if (this.TouchingRight(scene)) {
                 this.velocityX = 0;
             }
+        }
+        if ('s' in keyPressed || 'ArrowDown' in keyPressed) {
+            this.velocityY = Math.max(0, this.velocityY);
         }
 
         // We bias towards horizontal movement in the case of a conflict, by evaluating it first
@@ -86,6 +89,7 @@ export class Player extends SolidRectangleEntity {
             this.left,
             this.top + this.velocityY
         );
+
         const verticalCollisions: SolidRectangleEntity[] = CollidesWith(
             scene.entities.map((x) => x as SolidRectangleEntity),
             newVerticalState

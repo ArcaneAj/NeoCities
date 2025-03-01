@@ -13,36 +13,8 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     var maxLeft = gl.canvas.width;
     var maxTop = gl.canvas.height;
 
-    const scene: Scene = new Scene();
-
-    const groundThickness = Math.ceil(maxTop / 10);
-    const groundHeight = maxTop - groundThickness;
-    const ground = new SolidRectangleEntity(
-        0,
-        groundHeight,
-        maxLeft,
-        groundThickness,
-        0,
-        true
-    );
-    const ceiling = new SolidRectangleEntity(-2, -2, maxLeft + 2, 4, 0, true);
-    const leftWall = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
-    const rightWall = new SolidRectangleEntity(
-        maxLeft - 2,
-        -1,
-        4,
-        maxTop,
-        0,
-        true
-    );
-
-    scene.AddEntity(ground);
-    scene.AddEntity(ceiling);
-    scene.AddEntity(leftWall);
-    scene.AddEntity(rightWall);
-
     const player = new Player(200, 200, 100, 100, 0);
-    scene.AddEntity(player);
+    const scene: Scene = CreateBaseScene(maxTop, maxLeft, player);
 
     let currentTickTime = 0;
     const TICK_PER_SECOND = 60;
@@ -78,4 +50,54 @@ export function JumpGame(canvas: HTMLCanvasElement, gl: WebGLRenderingContext) {
     canvas.addEventListener('keydown', (event: KeyboardEvent) => {
         keyPressed[event.key] = true;
     });
+}
+
+function CreateBaseScene(maxTop: number, maxLeft: number, player: Player) {
+    const scene: Scene = new Scene();
+
+    scene.AddEntity(player);
+
+    const groundThickness = Math.ceil(maxTop / 10);
+    const groundHeight = maxTop - groundThickness;
+    const ground = new SolidRectangleEntity(
+        0,
+        groundHeight,
+        maxLeft,
+        groundThickness,
+        0,
+        true
+    );
+
+    const leftWall = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
+    const rightWall = new SolidRectangleEntity(
+        maxLeft - 2,
+        -1,
+        4,
+        maxTop,
+        0,
+        true
+    );
+
+    scene.AddEntity(ground);
+    scene.AddEntity(leftWall);
+    scene.AddEntity(rightWall);
+
+    // MAX PLAYER JUMP IS 325
+
+    const BOX_WIDTH = 300;
+    scene.AddEntity(
+        new SolidRectangleEntity(
+            (maxLeft - BOX_WIDTH) / 2,
+            groundHeight - 300,
+            BOX_WIDTH,
+            50,
+            0,
+            true
+        )
+    );
+    // const box2 = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
+    // const box3 = new SolidRectangleEntity(-2, -1, 4, maxTop, 0, true);
+    // scene.AddEntity(box2);
+    // scene.AddEntity(box3);
+    return scene;
 }
